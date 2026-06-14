@@ -130,3 +130,24 @@ input, select {
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; }
 iframe.viewer { width: 100%; height: 600px; border: 1px solid var(--border); border-radius: 8px; background: white; }
+
+/* Printable doctor report */
+.report { max-width: 880px; }
+.report h1 { font-size: 22px; margin: 0 0 2px; }
+.report .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+.report section { margin-bottom: 22px; }
+.report h3 { border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+.report table { font-size: 12px; }
+.report .cat { margin-top: 12px; font-weight: 600; color: var(--muted); font-size: 12px; }
+.disclaimer { font-size: 11px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 10px; }
+
+@media print {
+  :root { --bg: #fff; --panel: #fff; --panel-2: #fff; --border: #ccc; --text: #111; --muted: #555; }
+  body { background: #fff; color: #111; }
+  .sidebar, .no-print { display: none !important; }
+  .content { padding: 0; max-width: 100%; }
+  .report { max-width: 100%; }
+  .pill { border: 1px solid #999; }
+  table, tr, td, th, section { break-inside: avoid; }
+  a { color: #111; text-decoration: none; }
+}
