@@ -1,0 +1,160 @@
+// Typed API client. All calls go to the local FastAPI backend; the Claude key
+// lives server-side only and never reaches this bundle.
+
+const BASE = "/api";
+
+async function req<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, init);
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`${res.status} ${res.statusText}: ${text}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+export interface OverviewCard {
+  slug: string;
+  display_name: string;
+  category: string | null;
+  value: number;
+  unit: string;
+  ref_low: number | null;
+  ref_high: number | null;
+  in_range: boolean | null;
+  last_measured: string;
+  sparkline: { date: string; value: number }[];
+}
+
+export interface Overview {
+  stats: {
+    documents: number;
+    observations: number;
+    needs_review: number;
+    date_span: { from: string | null; to: string | null };
+  };
+  cards: OverviewCard[];
+}
+
+export interface Biomarker {
+  slug: string;
+  display_name: string;
+  category: string | null;
+  canonical_unit: string;
+  default_ref_low: number | null;
+  default_ref_high: number | null;
+  higher_is_better: boolean | null;
+  has_data: boolean;
+}
+
+export interface TimelinePoint {
+  date: string;
+  value: number;
+  operator: string;
+  refLow: number | null;
+  refHigh: number | null;
+  sourceDocId: number;
+  status: string;
+}
+
+export interface Timeline {
+  biomarker: { slug: string; display_name: string; category: string | null };
+  unit: string;
+  refLow: number | null;
+  refHigh: number | null;
+  higherIsBetter: boolean | null;
+  points: TimelinePoint[];
+}
+
+export interface DocumentRow {
+  id: number;
+  original_name: string;
+  lab_name: string | null;
+  source_type: string;
+  collection_date: string | null;
+  report_date: string | null;
+  ingest_status: string;
+  notes: string | null;
+  created_at: string;
+  observations_total: number;
+  confirmed: number;
+  needs_review: number;
+}
+
+export interface Observation {
+  id: number;
+  source_document_id: number;
+  raw_name: string;
+  raw_value: string | null;
+  raw_unit: string | null;
+  raw_ref_range: string | null;
+  biomarker_id: number | null;
+  value_num: number | null;
+  canonical_unit: string | null;
+  ref_low: number | null;
+  ref_high: number | null;
+  ref_source: string | null;
+  operator: string;
+  collection_date: string | null;
+  source_text_snippet: string | null;
+  mapping_confidence: number;
+  status: string;
+}
+
+export interface IngestSummary {
+  document_id: number;
+  is_duplicate: boolean;
+  status: string;
+  observations_total: number;
+  confirmed: number;
+  needs_review: number;
+  extraction_error: string | null;
+  message: string;
+}
+
+export interface ReviewItem {
+  observation: Observation;
+  suggested_biomarker: { slug: string; display_name: string } | null;
+  document: { id: number | null; original_name: string | null; lab_name: string | null };
+}
+
+export const api = {
+  health: () => req<{ status: string }>("/health"),
+  analysisStatus: () =>
+    req<{ api_key_configured: boolean; extract_model: string; phase4_enabled: boolean }>(
+      "/analysis/status",
+    ),
+  overview: () => req<Overview>("/overview"),
+  biomarkers: () => req<Biomarker[]>("/biomarkers"),
+  timeline: (slug: string) => req<Timeline>(`/biomarkers/${slug}/timeline`),
+  documents: () => req<DocumentRow[]>("/documents"),
+  document: (id: number) =>
+    req<{ document: DocumentRow & { raw_text?: string }; observations: Observation[] }>(
+      `/documents/${id}`,
+    ),
+  uploadDocument: (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return req<IngestSummary>("/documents", { method: "POST", body: fd });
+  },
+  patchDocument: (id: number, body: Record<string, unknown>) =>
+    req<DocumentRow>(`/documents/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+  deleteDocument: (id: number) =>
+    req<{ deleted: number }>(`/documents/${id}`, { method: "DELETE" }),
+  reviewQueue: () => req<ReviewItem[]>("/observations/review"),
+  patchObservation: (id: number, body: Record<string, unknown>) =>
+    req<Observation>(`/observations/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+  createObservation: (body: Record<string, unknown>) =>
+    req<Observation>("/observations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+};

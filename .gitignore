@@ -1,0 +1,27 @@
+# Health data — NEVER commit
+data/
+
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Node / frontend
+node_modules/
+dist/
+*.local
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# TS build info
+*.tsbuildinfo
