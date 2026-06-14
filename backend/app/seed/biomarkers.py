@@ -63,6 +63,21 @@ CATALOG: list[dict] = [
         "conversions": [("mmol/L", "mg/dL", 88.57, 0.0)],
     },
     {
+        "slug": "vldl_cholesterol", "display_name": "VLDL Cholesterol", "category": "Lipids",
+        "canonical_unit": "mg/dL", "ref_low": None, "ref_high": 30, "higher_is_better": False,
+        "aliases": ["vldl", "vldl cholesterol", "vldl c", "vldl cholesterol calc",
+                     "vldl calc", "colesterol vldl", "vldl colesterol"],
+        "conversions": [("mmol/L", "mg/dL", 38.67, 0.0)],
+    },
+    {
+        "slug": "chol_hdl_ratio", "display_name": "Cholesterol / HDL Ratio", "category": "Lipids",
+        "canonical_unit": "ratio", "ref_low": None, "ref_high": 5.0, "higher_is_better": False,
+        "aliases": ["risk ratio chol hdl", "cholesterol hdl ratio", "chol hdl ratio",
+                     "risk ratio cholesterol hdl", "relacao colesterol hdl",
+                     "indice de castelli", "chol hdl"],
+        "conversions": [],
+    },
+    {
         "slug": "creatinine", "display_name": "Creatinine", "category": "Renal",
         "canonical_unit": "mg/dL", "ref_low": 0.6, "ref_high": 1.3, "higher_is_better": False,
         "aliases": ["creatinine", "creatinina", "creat"],
