@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import {
   api,
   type AnalysisPreview,
-  type AnalysisResult,
   type Patient,
   type TrendFlag,
 } from "../api/client";
@@ -19,7 +18,9 @@ export default function Insights() {
   const [preview, setPreview] = useState<AnalysisPreview | null>(null);
   const [includeReports, setIncludeReports] = useState(true);
   const [question, setQuestion] = useState("");
-  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [streamed, setStreamed] = useState("");
+  const [streamErr, setStreamErr] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
   const [running, setRunning] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [patient, setPatient] = useState<Patient | null>(null);
@@ -41,10 +42,31 @@ export default function Insights() {
 
   async function run() {
     setRunning(true);
-    setResult(null);
+    setStreamed("");
+    setStreamErr(null);
+    setDone(false);
     try {
-      const r = await api.analysisRun({ include_reports: includeReports, question: question || null });
-      setResult(r);
+      const res = await fetch("/api/analysis/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ include_reports: includeReports, question: question || null }),
+      });
+      if (!res.ok || !res.body) {
+        const j = await res.json().catch(() => ({ error: res.statusText }));
+        setStreamErr(j.error || "error");
+        return;
+      }
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      for (;;) {
+        const { done: rdone, value } = await reader.read();
+        if (rdone) break;
+        const chunk = dec.decode(value, { stream: true });
+        setStreamed((s) => s + chunk);
+      }
+      setDone(true);
+    } catch (e) {
+      setStreamErr(String(e));
     } finally {
       setRunning(false);
     }
@@ -121,17 +143,17 @@ export default function Insights() {
             {running ? "Analyzing…" : "Run AI analysis"}
           </button>
         </div>
-        {result && (
-          result.ok ? (
-            <div style={{ marginTop: 14 }}>
-              <Markdown text={result.insights || ""} />
+        {streamErr && <p className="pill bad" style={{ marginTop: 12 }}>Error: {streamErr}</p>}
+        {streamed && (
+          <div style={{ marginTop: 14 }}>
+            <Markdown text={streamed} />
+            {running && <span className="muted">▍</span>}
+            {done && (
               <p className="muted" style={{ fontSize: 11, marginTop: 12 }}>
-                Informational only — not a diagnosis or medical advice. Model: {result.model}
+                Informational only — not a diagnosis or medical advice.
               </p>
-            </div>
-          ) : (
-            <p className="pill bad" style={{ marginTop: 12 }}>Error: {result.error}</p>
-          )
+            )}
+          </div>
         )}
       </div>
     </div>

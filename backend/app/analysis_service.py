@@ -185,16 +185,7 @@ def run_analysis(slice_payload: dict, flags: list[dict], question: Optional[str]
     except ImportError:
         return {"ok": False, "error": "anthropic_sdk_missing"}
 
-    import json
-
-    user = (
-        "Here is the data slice (the only data shared):\n```json\n"
-        + json.dumps({"slice": slice_payload, "trend_flags": flags}, ensure_ascii=False)
-        + "\n```\n"
-    )
-    if question:
-        user += f"\nUser question to focus on: {question}\n"
-
+    user = _build_user_message(slice_payload, flags, question)
     client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
     try:
         msg = client.messages.create(
@@ -216,3 +207,36 @@ def run_analysis(slice_payload: dict, flags: list[dict], question: Optional[str]
         "tokens_in": getattr(usage, "input_tokens", None) if usage else None,
         "tokens_out": getattr(usage, "output_tokens", None) if usage else None,
     }
+
+
+def _build_user_message(slice_payload: dict, flags: list[dict], question: Optional[str]) -> str:
+    import json
+
+    user = (
+        "Here is the data slice (the only data shared):\n```json\n"
+        + json.dumps({"slice": slice_payload, "trend_flags": flags}, ensure_ascii=False)
+        + "\n```\n"
+    )
+    if question:
+        user += f"\nUser question to focus on: {question}\n"
+    return user
+
+
+def stream_analysis(slice_payload: dict, flags: list[dict], question: Optional[str] = None):
+    """Yield insight text chunks as they arrive from Claude. Caller must have a key."""
+    import anthropic
+
+    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+    user = _build_user_message(slice_payload, flags, question)
+    try:
+        with client.messages.stream(
+            model=settings.extract_model,
+            max_tokens=2000,
+            temperature=0.3,
+            system=SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": user}],
+        ) as stream:
+            for chunk in stream.text_stream:
+                yield chunk
+    except Exception as exc:  # noqa: BLE001
+        yield f"\n\n[error: {type(exc).__name__}: {exc}]"

@@ -10,10 +10,11 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from sqlmodel import Session
 
-from ..analysis_service import build_slice, compute_flags, run_analysis
+from ..analysis_service import build_slice, compute_flags, run_analysis, stream_analysis
 from ..config import settings
 from ..db import get_session
 
@@ -77,3 +78,16 @@ def analysis_run(body: AnalysisRequest, session: Session = Depends(get_session))
     result = run_analysis(payload, flags, question=body.question)
     result["flags"] = flags
     return result
+
+
+@router.post("/stream")
+def analysis_stream(body: AnalysisRequest, session: Session = Depends(get_session)):
+    """Stream the AI summary token-by-token (text/plain chunks)."""
+    if not settings.has_api_key:
+        return JSONResponse(status_code=400, content={"ok": False, "error": "no_api_key"})
+    payload = build_slice(
+        session, biomarker_slugs=body.biomarker_slugs, include_reports=body.include_reports
+    )
+    flags = compute_flags(payload)
+    gen = stream_analysis(payload, flags, question=body.question)
+    return StreamingResponse(gen, media_type="text/plain; charset=utf-8")
