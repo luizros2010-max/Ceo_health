@@ -137,6 +137,42 @@ export interface NarrativeReport {
   impression: string | null;
 }
 
+export interface TrendFlag {
+  biomarker: string;
+  unit: string;
+  latest: number;
+  latest_date: string;
+  in_range: boolean | null;
+  direction: string;
+  n_points: number;
+  severity: "high" | "medium" | "watch" | "ok";
+}
+
+export interface AnalysisPreview {
+  slice: {
+    subject: { age: number | null; sex: string | null };
+    biomarkers: { biomarker: string; unit: string; points: unknown[] }[];
+    reports?: unknown[];
+  };
+  flags: TrendFlag[];
+  summary: { biomarkers: number; data_points: number; reports: number; shares_age_sex: boolean };
+}
+
+export interface AnalysisResult {
+  ok: boolean;
+  insights?: string;
+  error?: string;
+  model?: string;
+  flags: TrendFlag[];
+}
+
+export interface Patient {
+  id: number;
+  name: string;
+  date_of_birth: string | null;
+  sex: string | null;
+}
+
 export const api = {
   health: () => req<{ status: string }>("/health"),
   analysisStatus: () =>
@@ -187,4 +223,23 @@ export const api = {
     }),
   deleteReport: (id: number) =>
     req<{ deleted: number }>(`/reports/${id}`, { method: "DELETE" }),
+  getPatient: () => req<Patient>("/patient"),
+  patchPatient: (body: Record<string, unknown>) =>
+    req<Patient>("/patient", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+  analysisPreview: (body: Record<string, unknown>) =>
+    req<AnalysisPreview>("/analysis/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+  analysisRun: (body: Record<string, unknown>) =>
+    req<AnalysisResult>("/analysis/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
 };
