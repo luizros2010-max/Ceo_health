@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   api,
   type AnalysisPreview,
+  type HealthScore,
   type Overview,
   type Patient,
   type ReportListItem,
@@ -14,6 +15,7 @@ export default function Report() {
   const [pv, setPv] = useState<AnalysisPreview | null>(null);
   const [reports, setReports] = useState<ReportListItem[]>([]);
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [score, setScore] = useState<HealthScore | null>(null);
   const [keyOn, setKeyOn] = useState(false);
   const [ai, setAi] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
@@ -23,6 +25,7 @@ export default function Report() {
     api.analysisPreview({ include_reports: true }).then(setPv);
     api.reports().then(setReports);
     api.getPatient().then(setPatient).catch(() => {});
+    api.healthScore().then(setScore).catch(() => {});
     api.analysisStatus().then((s) => setKeyOn(s.api_key_configured));
   }, []);
 
@@ -64,6 +67,31 @@ export default function Report() {
         {ov.stats.date_span.from ? ` · data ${ov.stats.date_span.from} → ${ov.stats.date_span.to}` : ""}
         {` · ${ov.stats.observations} results`}
       </div>
+
+      {score?.overall.score != null && (
+        <section>
+          <h3>Health score (vs age-peers)</h3>
+          <p style={{ margin: "4px 0 10px" }}>
+            <b style={{ fontSize: 18 }}>{score.overall.score} / 100</b>{" "}
+            <span style={{ textTransform: "capitalize" }}>{score.overall.label}</span> —{" "}
+            <span className="muted">{score.overall.band}</span>
+          </p>
+          <table>
+            <tbody>
+              {score.domains.map((d) => (
+                <tr key={d.name}>
+                  <td style={{ width: "55%" }}>{d.name}</td>
+                  <td>{d.score} / 100</td>
+                  <td className="muted">weight {(d.weight * 100).toFixed(0)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="muted" style={{ fontSize: 11, marginTop: 6 }}>
+            Scores vs common clinical optimal targets; percentile band is an estimate.
+          </p>
+        </section>
+      )}
 
       <section>
         <h3>Priority flags</h3>
