@@ -93,10 +93,41 @@ CATALOG: list[dict] = [
         "conversions": [],
     },
     {
-        "slug": "urea_bun", "display_name": "Urea / BUN", "category": "Renal",
+        "slug": "bun", "display_name": "BUN (Urea Nitrogen)", "category": "Renal",
         "canonical_unit": "mg/dL", "ref_low": 7, "ref_high": 20, "higher_is_better": None,
-        "aliases": ["bun", "urea", "blood urea nitrogen", "ureia", "uréia"],
-        "conversions": [("mmol/L", "mg/dL", 6.006, 0.0)],
+        "aliases": ["bun", "blood urea nitrogen", "urea nitrogen"],
+        "conversions": [("mmol/L", "mg/dL", 2.801, 0.0)],
+    },
+    {
+        "slug": "urea", "display_name": "Urea (Serum)", "category": "Renal",
+        "canonical_unit": "mg/dL", "ref_low": 10, "ref_high": 50, "higher_is_better": None,
+        "aliases": ["urea", "ureia", "uréia", "azoemia", "azotemia", "uremia"],
+        "conversions": [("mmol/L", "mg/dL", 6.006, 0.0), ("g/L", "mg/dL", 100.0, 0.0)],
+    },
+    {
+        "slug": "sodium", "display_name": "Sodium", "category": "Electrolytes",
+        "canonical_unit": "mEq/L", "ref_low": 135, "ref_high": 145, "higher_is_better": None,
+        "aliases": ["sodium", "sodio", "sódio", "na", "natremia"],
+        "conversions": [("mmol/L", "mEq/L", 1.0, 0.0)],
+    },
+    {
+        "slug": "potassium", "display_name": "Potassium", "category": "Electrolytes",
+        "canonical_unit": "mEq/L", "ref_low": 3.5, "ref_high": 5.1, "higher_is_better": None,
+        "aliases": ["potassium", "potasio", "potassio", "potássio", "kalemia"],
+        "conversions": [("mmol/L", "mEq/L", 1.0, 0.0)],
+    },
+    {
+        "slug": "chloride", "display_name": "Chloride", "category": "Electrolytes",
+        "canonical_unit": "mEq/L", "ref_low": 98, "ref_high": 107, "higher_is_better": None,
+        "aliases": ["chloride", "cloro", "cloreto", "cloremia"],
+        "conversions": [("mmol/L", "mEq/L", 1.0, 0.0)],
+    },
+    {
+        "slug": "total_protein", "display_name": "Total Protein", "category": "Protein",
+        "canonical_unit": "g/dL", "ref_low": 6.3, "ref_high": 7.9, "higher_is_better": None,
+        "aliases": ["total protein", "proteinas totales", "proteinas totais",
+                     "proteina total", "proteínas totais", "proteinas totales sericas"],
+        "conversions": [("g/L", "g/dL", 0.1, 0.0)],
     },
     {
         "slug": "uric_acid", "display_name": "Uric Acid", "category": "Metabolic",
@@ -209,7 +240,7 @@ CATALOG: list[dict] = [
         "slug": "crp", "display_name": "C-Reactive Protein", "category": "Inflammation",
         "canonical_unit": "mg/L", "ref_low": None, "ref_high": 3.0, "higher_is_better": False,
         "aliases": ["crp", "c reactive protein", "hs crp", "pcr", "proteina c reativa",
-                     "proteina c reativa ultra sensivel"],
+                     "proteina c reativa ultra sensivel", "proteina c reactiva"],
         "conversions": [("mg/dL", "mg/L", 10.0, 0.0)],
     },
     {
