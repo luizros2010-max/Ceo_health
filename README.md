@@ -80,6 +80,41 @@ cd frontend && npm run build      # emits frontend/dist
 
 ---
 
+## Loading your data
+
+Two ways to get real history in, besides the web Upload page:
+
+**1. Structured CSV (no API key needed)** — for values you already have tidy
+(e.g. exported from a tracking spreadsheet). One measurement per row:
+
+```csv
+biomarker,date,value,unit
+Glucose,2019-10-01,91,mg/dl
+LDL cholesterol,2018-05-01,132,mg/dl
+```
+
+```bash
+cd backend
+python import_csv.py ../data/imports/your_data.csv --source-name "My Spreadsheet"
+```
+
+`biomarker` may be a catalog slug or any English/Portuguese name (matched, with
+fuzzy fallback); `unit` is optional and values are converted to each biomarker's
+canonical unit. Imported rows are written as **confirmed** so they chart
+immediately. Keep your CSV under `data/` (gitignored) — never commit health data.
+
+**2. Lab PDFs via the extraction pipeline (needs an API key)**:
+
+```bash
+cd backend
+python extract_cli.py path/to/report.pdf        # one file
+python extract_cli.py path/to/folder/           # all PDFs in a folder
+```
+
+This runs intake → dedup → text extract → Claude extraction → normalize →
+validate, then drops rows into the Review queue to confirm. Without
+`ANTHROPIC_API_KEY` it stores the PDF + text but skips extraction.
+
 ## Tests
 
 ```bash
