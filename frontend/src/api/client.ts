@@ -189,6 +189,33 @@ export interface HealthScore {
   caveats: string[];
 }
 
+export interface PlanTarget {
+  biomarker: string;
+  slug: string;
+  domain: string;
+  current: number;
+  unit: string;
+  current_score: number;
+  target: number;
+  direction: string;
+}
+export interface PlanLever {
+  domain: string;
+  score: number;
+  nutrition?: string[];
+  workout?: string[];
+  lifestyle?: string[];
+  medical?: string[];
+}
+export interface ActionPlan {
+  overall: { score: number | null; band: string; label: string };
+  subject: { age: number | null; sex: string | null };
+  targets: PlanTarget[];
+  levers: PlanLever[];
+  missing_trackers: { slug: string; label: string }[];
+  note: string;
+}
+
 export interface Patient {
   id: number;
   name: string;
@@ -247,6 +274,7 @@ export const api = {
   deleteReport: (id: number) =>
     req<{ deleted: number }>(`/reports/${id}`, { method: "DELETE" }),
   healthScore: () => req<HealthScore>("/analysis/score"),
+  actionPlan: () => req<ActionPlan>("/analysis/plan"),
   getPatient: () => req<Patient>("/patient"),
   patchPatient: (body: Record<string, unknown>) =>
     req<Patient>("/patient", {

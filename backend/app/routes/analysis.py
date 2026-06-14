@@ -17,6 +17,7 @@ from sqlmodel import Session
 from ..analysis_service import build_slice, compute_flags, run_analysis, stream_analysis
 from ..config import settings
 from ..db import get_session
+from ..plan_service import compute_plan
 from ..scoring import compute_score
 
 router = APIRouter(prefix="/api/analysis", tags=["analysis"])
@@ -85,6 +86,31 @@ def analysis_run(body: AnalysisRequest, session: Session = Depends(get_session))
 def analysis_score(session: Session = Depends(get_session)):
     """Transparent health score vs. age-peers (deterministic; no key needed)."""
     return compute_score(session)
+
+
+@router.get("/plan")
+def analysis_plan(session: Session = Depends(get_session)):
+    """Action plan: score-gap targets + workout/nutrition/lifestyle levers (deterministic)."""
+    return compute_plan(session)
+
+
+PLAN_QUESTION = (
+    "Draft a specific, prioritized workout and nutrition plan to improve my lowest-scoring "
+    "areas and raise my overall health score. Give a concrete weekly structure (aerobic + "
+    "resistance, adapted to any flagged musculoskeletal findings), the highest-impact nutrition "
+    "changes, and what to discuss with my physician. Be specific with numbers."
+)
+
+
+@router.post("/plan/stream")
+def analysis_plan_stream(session: Session = Depends(get_session)):
+    """Stream an AI-drafted plan from the minimal slice (needs a key)."""
+    if not settings.has_api_key:
+        return JSONResponse(status_code=400, content={"ok": False, "error": "no_api_key"})
+    payload = build_slice(session, include_reports=True)
+    flags = compute_flags(payload)
+    gen = stream_analysis(payload, flags, question=PLAN_QUESTION)
+    return StreamingResponse(gen, media_type="text/plain; charset=utf-8")
 
 
 @router.post("/stream")

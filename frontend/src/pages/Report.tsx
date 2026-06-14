@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   api,
+  type ActionPlan,
   type AnalysisPreview,
   type HealthScore,
   type Overview,
@@ -16,6 +17,7 @@ export default function Report() {
   const [reports, setReports] = useState<ReportListItem[]>([]);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [score, setScore] = useState<HealthScore | null>(null);
+  const [plan, setPlan] = useState<ActionPlan | null>(null);
   const [keyOn, setKeyOn] = useState(false);
   const [ai, setAi] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
@@ -26,6 +28,7 @@ export default function Report() {
     api.reports().then(setReports);
     api.getPatient().then(setPatient).catch(() => {});
     api.healthScore().then(setScore).catch(() => {});
+    api.actionPlan().then(setPlan).catch(() => {});
     api.analysisStatus().then((s) => setKeyOn(s.api_key_configured));
   }, []);
 
@@ -90,6 +93,25 @@ export default function Report() {
           <p className="muted" style={{ fontSize: 11, marginTop: 6 }}>
             Scores vs common clinical optimal targets; percentile band is an estimate.
           </p>
+        </section>
+      )}
+
+      {plan && plan.targets.length > 0 && (
+        <section>
+          <h3>Action plan — targets</h3>
+          <table>
+            <thead><tr><th>Marker</th><th>Current</th><th>Goal</th><th>Domain</th></tr></thead>
+            <tbody>
+              {plan.targets.map((t) => (
+                <tr key={t.slug}>
+                  <td>{t.biomarker}</td>
+                  <td>{t.current} {t.unit}</td>
+                  <td>{t.direction} {t.target} {t.unit}</td>
+                  <td className="muted">{t.domain}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </section>
       )}
 

@@ -257,6 +257,34 @@ CATALOG: list[dict] = [
                      "antigeno prostatico"],
         "conversions": [],
     },
+    {
+        "slug": "systolic_bp", "display_name": "Systolic Blood Pressure", "category": "Vitals",
+        "canonical_unit": "mmHg", "ref_low": None, "ref_high": 120, "higher_is_better": False,
+        "aliases": ["systolic", "systolic blood pressure", "sbp", "presion sistolica",
+                     "pressao sistolica", "pas"],
+        "conversions": [],
+    },
+    {
+        "slug": "diastolic_bp", "display_name": "Diastolic Blood Pressure", "category": "Vitals",
+        "canonical_unit": "mmHg", "ref_low": None, "ref_high": 80, "higher_is_better": False,
+        "aliases": ["diastolic", "diastolic blood pressure", "dbp", "presion diastolica",
+                     "pressao diastolica", "pad"],
+        "conversions": [],
+    },
+    {
+        "slug": "bmi", "display_name": "BMI", "category": "Body",
+        "canonical_unit": "kg/m2", "ref_low": 18.5, "ref_high": 24.9, "higher_is_better": None,
+        "aliases": ["bmi", "body mass index", "imc", "indice de masa corporal",
+                     "indice de massa corporal"],
+        "conversions": [],
+    },
+    {
+        "slug": "waist_circumference", "display_name": "Waist Circumference", "category": "Body",
+        "canonical_unit": "cm", "ref_low": None, "ref_high": 94, "higher_is_better": False,
+        "aliases": ["waist", "waist circumference", "cintura", "perimetro abdominal",
+                     "circunferencia abdominal", "circunferencia de cintura"],
+        "conversions": [("in", "cm", 2.54, 0.0), ("inch", "cm", 2.54, 0.0)],
+    },
 ]
 
 

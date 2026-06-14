@@ -51,6 +51,11 @@ ANCHORS: dict[str, list[tuple[float, float]]] = {
     "psa_total": [(0.5, 100), (1.5, 95), (2.5, 85), (4.0, 65), (6.0, 35), (10.0, 12)],
     "uric_acid": [(3.0, 90), (4.5, 100), (6.0, 88), (7.0, 72), (8.5, 45), (10.0, 20)],
     "albumin": [(3.3, 60), (3.8, 85), (4.3, 100), (5.0, 100), (5.5, 90)],
+    # Vitals / body
+    "systolic_bp": [(105, 100), (120, 90), (130, 70), (140, 45), (160, 20)],
+    "diastolic_bp": [(65, 100), (80, 90), (90, 60), (100, 30)],
+    "bmi": [(18.5, 80), (22, 100), (25, 82), (28, 60), (32, 35), (38, 12)],
+    "waist_circumference": [(80, 100), (94, 82), (102, 55), (112, 30), (125, 12)],
 }
 
 # Domains: (display, weight, [biomarker slugs])
@@ -61,6 +66,7 @@ DOMAINS: list[tuple[str, float, list[str]]] = [
     ("Liver", 0.10, ["alt", "ast", "ggt", "bilirubin_total"]),
     ("Inflammation / blood", 0.10, ["crp", "hemoglobin", "wbc", "platelets"]),
     ("Hormonal / other", 0.15, ["vitamin_d", "tsh", "psa_total", "uric_acid", "albumin"]),
+    ("Body & blood pressure", 0.15, ["bmi", "waist_circumference", "systolic_bp", "diastolic_bp"]),
 ]
 
 
