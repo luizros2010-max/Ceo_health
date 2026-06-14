@@ -42,6 +42,20 @@ Nothing enters the longitudinal record until you **confirm** it.
 
 ## Quick start
 
+### One command (recommended)
+
+After cloning, just run the launcher — it creates the virtualenv, installs
+deps, builds the frontend, and serves the whole app from a single local URL:
+
+```bash
+./start.sh            # macOS / Linux  →  http://127.0.0.1:8000
+start.bat             # Windows
+./start.sh --dev      # backend + Vite hot-reload (two ports) for development
+```
+
+To load your data first, drop your CSV/JSON files into `data/imports/` and run
+`./load_data.sh`. The manual steps below are equivalent.
+
 ### 1. Backend
 
 ```bash
