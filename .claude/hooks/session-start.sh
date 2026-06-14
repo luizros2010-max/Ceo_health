@@ -8,6 +8,10 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
 
+# Run asynchronously: the session starts immediately while deps install in the
+# background. Trade-off: the agent may briefly run before deps are ready.
+echo '{"async": true, "asyncTimeout": 600000}'
+
 cd "${CLAUDE_PROJECT_DIR:-.}"
 
 # --- Backend: Python venv + deps ---
