@@ -17,6 +17,7 @@ from sqlmodel import Session
 from ..analysis_service import build_slice, compute_flags, run_analysis, stream_analysis
 from ..config import settings
 from ..db import get_session
+from ..scoring import compute_score
 
 router = APIRouter(prefix="/api/analysis", tags=["analysis"])
 
@@ -78,6 +79,12 @@ def analysis_run(body: AnalysisRequest, session: Session = Depends(get_session))
     result = run_analysis(payload, flags, question=body.question)
     result["flags"] = flags
     return result
+
+
+@router.get("/score")
+def analysis_score(session: Session = Depends(get_session)):
+    """Transparent health score vs. age-peers (deterministic; no key needed)."""
+    return compute_score(session)
 
 
 @router.post("/stream")

@@ -6,6 +6,7 @@ import DocumentDetail from "./pages/DocumentDetail";
 import BiomarkerTimeline from "./pages/BiomarkerTimeline";
 import Reports from "./pages/Reports";
 import Insights from "./pages/Insights";
+import Score from "./pages/Score";
 import Report from "./pages/Report";
 import Review from "./pages/Review";
 
@@ -21,6 +22,7 @@ export default function App() {
           <NavLink to="/documents">Documents</NavLink>
           <NavLink to="/biomarker">Timelines</NavLink>
           <NavLink to="/reports">Imaging & Reports</NavLink>
+          <NavLink to="/score">Health Score</NavLink>
           <NavLink to="/insights">AI Insights</NavLink>
           <NavLink to="/report">Doctor Report</NavLink>
           <NavLink to="/review">Review</NavLink>
@@ -35,6 +37,7 @@ export default function App() {
           <Route path="/biomarker" element={<BiomarkerTimeline />} />
           <Route path="/biomarker/:slug" element={<BiomarkerTimeline />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/score" element={<Score />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="/report" element={<Report />} />
           <Route path="/review" element={<Review />} />

@@ -166,6 +166,29 @@ export interface AnalysisResult {
   flags: TrendFlag[];
 }
 
+export interface ScoreMarker {
+  biomarker: string;
+  slug: string;
+  value: number;
+  unit: string;
+  date: string;
+  score: number;
+  optimal: number | null;
+}
+export interface ScoreDomain {
+  name: string;
+  weight: number;
+  score: number;
+  markers: ScoreMarker[];
+}
+export interface HealthScore {
+  overall: { score: number | null; band: string; label: string };
+  subject: { age: number | null; sex: string | null };
+  domains: ScoreDomain[];
+  as_of: string | null;
+  caveats: string[];
+}
+
 export interface Patient {
   id: number;
   name: string;
@@ -223,6 +246,7 @@ export const api = {
     }),
   deleteReport: (id: number) =>
     req<{ deleted: number }>(`/reports/${id}`, { method: "DELETE" }),
+  healthScore: () => req<HealthScore>("/analysis/score"),
   getPatient: () => req<Patient>("/patient"),
   patchPatient: (body: Record<string, unknown>) =>
     req<Patient>("/patient", {
