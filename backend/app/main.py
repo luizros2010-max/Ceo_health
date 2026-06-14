@@ -16,7 +16,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .config import REPO_ROOT
 from .db import init_db
-from .routes import analysis, biomarkers, documents, observations
+from .routes import analysis, biomarkers, documents, observations, reports
 
 
 @asynccontextmanager
@@ -44,6 +44,7 @@ def health():
 app.include_router(documents.router)
 app.include_router(observations.router)
 app.include_router(biomarkers.router)
+app.include_router(reports.router)
 app.include_router(analysis.router)
 
 # Local-prod: serve the built frontend (frontend/dist) from the same process.

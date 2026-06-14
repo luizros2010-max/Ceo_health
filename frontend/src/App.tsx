@@ -4,6 +4,7 @@ import Upload from "./pages/Upload";
 import Documents from "./pages/Documents";
 import DocumentDetail from "./pages/DocumentDetail";
 import BiomarkerTimeline from "./pages/BiomarkerTimeline";
+import Reports from "./pages/Reports";
 import Review from "./pages/Review";
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
           <NavLink to="/upload">Upload</NavLink>
           <NavLink to="/documents">Documents</NavLink>
           <NavLink to="/biomarker">Timelines</NavLink>
+          <NavLink to="/reports">Imaging & Reports</NavLink>
           <NavLink to="/review">Review</NavLink>
         </nav>
       </aside>
@@ -28,6 +30,7 @@ export default function App() {
           <Route path="/documents/:id" element={<DocumentDetail />} />
           <Route path="/biomarker" element={<BiomarkerTimeline />} />
           <Route path="/biomarker/:slug" element={<BiomarkerTimeline />} />
+          <Route path="/reports" element={<Reports />} />
           <Route path="/review" element={<Review />} />
         </Routes>
       </main>

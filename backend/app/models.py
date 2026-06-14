@@ -132,3 +132,26 @@ class ExtractionRun(SQLModel, table=True):
     ok: bool = True
     error: Optional[str] = None
     created_at: datetime = Field(default_factory=_now)
+
+
+class NarrativeReport(SQLModel, table=True):
+    """Imaging / narrative reports (MRI, echocardiogram, endoscopy, specialist notes).
+
+    These have findings as free text rather than trendable numbers, so they live
+    beside the biomarker timelines instead of in the observation fact table.
+    """
+
+    __tablename__ = "narrative_report"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    patient_id: Optional[int] = Field(default=None, foreign_key="patient.id", index=True)
+    source_document_id: Optional[int] = Field(
+        default=None, foreign_key="source_document.id", index=True
+    )
+    title: str
+    category: Optional[str] = None  # 'MRI' | 'Echocardiogram' | 'Endoscopy' | 'Cardiology' | ...
+    report_date: Optional[date] = Field(default=None, index=True)
+    facility: Optional[str] = None
+    body: str = ""  # full findings text
+    impression: Optional[str] = None  # short conclusion, if separable
+    created_at: datetime = Field(default_factory=_now)

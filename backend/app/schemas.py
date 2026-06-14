@@ -23,6 +23,15 @@ class ManualObservation(BaseModel):
     notes: Optional[str] = None
 
 
+class NarrativeReportIn(BaseModel):
+    title: str
+    category: Optional[str] = None
+    report_date: Optional[date] = None
+    facility: Optional[str] = None
+    body: str = ""
+    impression: Optional[str] = None
+
+
 class ObservationPatch(BaseModel):
     status: Optional[str] = None  # 'confirmed' | 'rejected' | 'needs_review'
     biomarker_slug: Optional[str] = None  # re-map -> also learns a new alias

@@ -117,6 +117,26 @@ export interface ReviewItem {
   document: { id: number | null; original_name: string | null; lab_name: string | null };
 }
 
+export interface ReportListItem {
+  id: number;
+  title: string;
+  category: string | null;
+  report_date: string | null;
+  facility: string | null;
+  impression: string | null;
+  snippet: string;
+}
+
+export interface NarrativeReport {
+  id: number;
+  title: string;
+  category: string | null;
+  report_date: string | null;
+  facility: string | null;
+  body: string;
+  impression: string | null;
+}
+
 export const api = {
   health: () => req<{ status: string }>("/health"),
   analysisStatus: () =>
@@ -157,4 +177,14 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }),
+  reports: () => req<ReportListItem[]>("/reports"),
+  report: (id: number) => req<NarrativeReport>(`/reports/${id}`),
+  createReport: (body: Record<string, unknown>) =>
+    req<NarrativeReport>("/reports", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+  deleteReport: (id: number) =>
+    req<{ deleted: number }>(`/reports/${id}`, { method: "DELETE" }),
 };
