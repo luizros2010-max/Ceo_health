@@ -19,8 +19,9 @@ CATALOG: list[dict] = [
         "slug": "glucose_fasting", "display_name": "Glucose (Fasting)", "category": "Metabolic",
         "canonical_unit": "mg/dL", "ref_low": 70, "ref_high": 99, "higher_is_better": None,
         "aliases": ["glucose", "fasting glucose", "glucose fasting", "blood glucose",
-                     "glicose", "glicemia", "glicemia de jejum", "glicose em jejum", "gli"],
-        "conversions": [("mmol/L", "mg/dL", 18.0182, 0.0)],
+                     "glicose", "glicemia", "glicemia de jejum", "glicose em jejum", "gli",
+                     "glicemia basal", "glucosa", "glucemia"],
+        "conversions": [("mmol/L", "mg/dL", 18.0182, 0.0), ("g/L", "mg/dL", 100.0, 0.0)],
     },
     {
         "slug": "hba1c", "display_name": "Hemoglobin A1c", "category": "Metabolic",
@@ -59,7 +60,7 @@ CATALOG: list[dict] = [
         "slug": "triglycerides", "display_name": "Triglycerides", "category": "Lipids",
         "canonical_unit": "mg/dL", "ref_low": None, "ref_high": 150, "higher_is_better": False,
         "aliases": ["triglycerides", "triglyceride", "trig", "triglicerides",
-                     "triglicerideos", "triglicerideos totais"],
+                     "triglicerideos", "triglicerideos totais", "trigliceridos"],
         "conversions": [("mmol/L", "mg/dL", 88.57, 0.0)],
     },
     {
@@ -74,19 +75,21 @@ CATALOG: list[dict] = [
         "canonical_unit": "ratio", "ref_low": None, "ref_high": 5.0, "higher_is_better": False,
         "aliases": ["risk ratio chol hdl", "cholesterol hdl ratio", "chol hdl ratio",
                      "risk ratio cholesterol hdl", "relacao colesterol hdl",
-                     "indice de castelli", "chol hdl"],
+                     "indice de castelli", "chol hdl", "indice aterogenico",
+                     "indice aterogenico castelli"],
         "conversions": [],
     },
     {
         "slug": "creatinine", "display_name": "Creatinine", "category": "Renal",
         "canonical_unit": "mg/dL", "ref_low": 0.6, "ref_high": 1.3, "higher_is_better": False,
-        "aliases": ["creatinine", "creatinina", "creat"],
+        "aliases": ["creatinine", "creatinina", "creat", "creatininemia"],
         "conversions": [("umol/L", "mg/dL", 0.011312, 0.0), ("µmol/L", "mg/dL", 0.011312, 0.0)],
     },
     {
         "slug": "egfr", "display_name": "eGFR", "category": "Renal",
         "canonical_unit": "mL/min/1.73m2", "ref_low": 90, "ref_high": None, "higher_is_better": True,
-        "aliases": ["egfr", "gfr", "estimated gfr", "taxa de filtracao glomerular", "tfg"],
+        "aliases": ["egfr", "gfr", "estimated gfr", "taxa de filtracao glomerular", "tfg",
+                     "filtrado glomerular", "filtrado glomerular calculado"],
         "conversions": [],
     },
     {
@@ -98,19 +101,21 @@ CATALOG: list[dict] = [
     {
         "slug": "uric_acid", "display_name": "Uric Acid", "category": "Metabolic",
         "canonical_unit": "mg/dL", "ref_low": 3.4, "ref_high": 7.0, "higher_is_better": False,
-        "aliases": ["uric acid", "acido urico", "ácido úrico", "urate"],
+        "aliases": ["uric acid", "acido urico", "ácido úrico", "urate", "uricemia"],
         "conversions": [("umol/L", "mg/dL", 0.0168, 0.0)],
     },
     {
         "slug": "alt", "display_name": "ALT (TGP)", "category": "Liver",
         "canonical_unit": "U/L", "ref_low": None, "ref_high": 41, "higher_is_better": False,
-        "aliases": ["alt", "sgpt", "tgp", "alanine aminotransferase", "alanina aminotransferase"],
+        "aliases": ["alt", "sgpt", "tgp", "alanine aminotransferase", "alanina aminotransferase",
+                     "gpt", "gpt alt"],
         "conversions": [],
     },
     {
         "slug": "ast", "display_name": "AST (TGO)", "category": "Liver",
         "canonical_unit": "U/L", "ref_low": None, "ref_high": 40, "higher_is_better": False,
-        "aliases": ["ast", "sgot", "tgo", "aspartate aminotransferase", "aspartato aminotransferase"],
+        "aliases": ["ast", "sgot", "tgo", "aspartate aminotransferase", "aspartato aminotransferase",
+                     "got", "got ast"],
         "conversions": [],
     },
     {
@@ -122,7 +127,8 @@ CATALOG: list[dict] = [
     {
         "slug": "alkaline_phosphatase", "display_name": "Alkaline Phosphatase", "category": "Liver",
         "canonical_unit": "U/L", "ref_low": 40, "ref_high": 129, "higher_is_better": None,
-        "aliases": ["alkaline phosphatase", "alp", "fosfatase alcalina"],
+        "aliases": ["alkaline phosphatase", "alp", "fosfatase alcalina", "fosfatasa alcalina",
+                     "fosfatasas alcalinas"],
         "conversions": [],
     },
     {
@@ -134,7 +140,7 @@ CATALOG: list[dict] = [
     {
         "slug": "albumin", "display_name": "Albumin", "category": "Protein",
         "canonical_unit": "g/dL", "ref_low": 3.5, "ref_high": 5.0, "higher_is_better": None,
-        "aliases": ["albumin", "albumina"],
+        "aliases": ["albumin", "albumina", "albuminemia"],
         "conversions": [("g/L", "g/dL", 0.1, 0.0)],
     },
     {
@@ -216,7 +222,8 @@ CATALOG: list[dict] = [
         "slug": "psa_total", "display_name": "PSA (Total)", "category": "Tumor Markers",
         "canonical_unit": "ng/mL", "ref_low": None, "ref_high": 4.0, "higher_is_better": False,
         "aliases": ["psa", "total psa", "prostate specific antigen", "psa total",
-                     "antigeno prostatico especifico"],
+                     "antigeno prostatico especifico", "antigeno prostatico total",
+                     "antigeno prostatico"],
         "conversions": [],
     },
 ]
