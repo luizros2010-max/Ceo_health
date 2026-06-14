@@ -103,6 +103,10 @@ fuzzy fallback); `unit` is optional and values are converted to each biomarker's
 canonical unit. Imported rows are written as **confirmed** so they chart
 immediately. Keep your CSV under `data/` (gitignored) — never commit health data.
 
+**Bulk load (one command):** drop all your CSV files and `narrative_reports.json`
+into `data/imports/`, then from the repo root run `./load_data.sh` — it imports
+every CSV plus the reports JSON in one go (re-running is safe; duplicates are skipped).
+
 **2. Lab PDFs via the extraction pipeline (needs an API key)**:
 
 ```bash
