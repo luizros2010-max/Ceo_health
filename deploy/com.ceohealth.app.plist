@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  launchd agent for self-hosting CEO of Your Own Health on macOS.
+
+  Install (replace YOURNAME and the repo path to match your machine):
+    cp deploy/com.ceohealth.app.plist ~/Library/LaunchAgents/
+    # edit the path in WorkingDirectory, ProgramArguments, and log paths below
+    launchctl load -w ~/Library/LaunchAgents/com.ceohealth.app.plist
+    launchctl list | grep ceohealth        # confirm it's running
+
+  Update:  git pull, then
+    launchctl kickstart -k gui/$(id -u)/com.ceohealth.app
+  Stop:    launchctl unload ~/Library/LaunchAgents/com.ceohealth.app.plist
+
+  Reach it from family devices over Tailscale at http://<host-tailscale-ip>:8000
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.ceohealth.app</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/YOURNAME/Ceo_health/deploy/serve.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/YOURNAME/Ceo_health</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOST</key>
+        <string>0.0.0.0</string>
+        <key>PORT</key>
+        <string>8000</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/YOURNAME/Library/Logs/ceo-health.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/YOURNAME/Library/Logs/ceo-health.err.log</string>
+</dict>
+</plist>

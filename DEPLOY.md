@@ -58,7 +58,13 @@ journalctl -u ceo-health -f          # logs
 ```
 It runs `deploy/serve.sh` (builds the frontend if needed, then serves on `0.0.0.0:8000`).
 Updates: `git pull` then `sudo systemctl restart ceo-health`.
-- **macOS:** run `HOST=0.0.0.0 deploy/serve.sh` under a `launchd` agent (or `tmux`).
+- **macOS:** a ready **launchd** agent is included:
+  ```bash
+  cp deploy/com.ceohealth.app.plist ~/Library/LaunchAgents/
+  # edit the YOURNAME paths inside the plist, then:
+  launchctl load -w ~/Library/LaunchAgents/com.ceohealth.app.plist
+  ```
+  Update after `git pull`: `launchctl kickstart -k gui/$(id -u)/com.ceohealth.app`.
 
 ## Managing family members (admin)
 The **first** profile created is the **family admin**. Signed in as admin, a
