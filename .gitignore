@@ -25,3 +25,6 @@ dist/
 
 # TS build info
 *.tsbuildinfo
+
+# stray generated dir
+backend/docs/
