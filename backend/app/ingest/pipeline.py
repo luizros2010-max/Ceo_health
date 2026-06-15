@@ -13,7 +13,7 @@ from typing import Optional
 from sqlmodel import Session, select
 
 from ..config import settings
-from ..models import ExtractionRun, Observation, Patient, SourceDocument
+from ..models import ExtractionRun, NarrativeReport, Observation, Patient, SourceDocument
 from . import extract_llm, extract_rules, normalize, validate
 from .extract_pdf import extract_pdf
 from .intake import PDF_MIME, source_type_for, store_document
@@ -140,6 +140,26 @@ def ingest_document(
             doc.collection_date = rr.collection_date
 
     if not rows:
+        # Maybe it's an imaging / narrative report (echo, MRI, ultrasound, endoscopy).
+        narrative = extract_rules.detect_narrative(pdf.full_text)
+        if narrative:
+            session.add(NarrativeReport(
+                patient_id=doc.patient_id,
+                source_document_id=doc.id,
+                title=narrative.title,
+                category=narrative.category,
+                report_date=narrative.report_date,
+                impression=narrative.impression,
+                body=narrative.body,
+            ))
+            doc.ingest_status = "reviewed"
+            doc.collection_date = doc.collection_date or narrative.report_date
+            doc.notes = f"Imported as {narrative.category} report."
+            session.add(doc)
+            return IngestSummary(
+                document_id=doc.id, is_duplicate=False, status=doc.ingest_status,
+                message=f"Saved as an imaging/{narrative.category} report (see Imaging & Reports).",
+            )
         doc.ingest_status = "failed"
         doc.notes = ("Couldn't recognize biomarker values in this PDF's text. "
                      "You can add values via manual entry, or set an ANTHROPIC_API_KEY "

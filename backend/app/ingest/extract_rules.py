@@ -135,3 +135,63 @@ def extract_from_text(session: Session, full_text: str) -> RulesResult:
         seen.add(alias.biomarker_id)
 
     return RulesResult(rows=rows, collection_date=_parse_dates(folded), lab_name=None)
+
+
+# Imaging / narrative report detection (echo, MRI, ultrasound, endoscopy, etc.)
+_MODALITIES: list[tuple[str, str, str]] = [
+    # folded keyword, category, title
+    ("resonancia magnetica", "MRI", "MRI"),
+    ("resonancia", "MRI", "MRI"),
+    ("ecocardiograma de esfuerzo", "Cardiology", "Stress Echocardiogram"),
+    ("ecocardiograma", "Cardiology", "Echocardiogram"),
+    ("ecocardiografia", "Cardiology", "Echocardiogram"),
+    ("ecodoppler", "Vascular", "Doppler Ultrasound"),
+    ("eco doppler", "Vascular", "Doppler Ultrasound"),
+    ("doppler", "Vascular", "Doppler Ultrasound"),
+    ("gastroscopia", "Endoscopy", "Gastroscopy"),
+    ("endoscopia", "Endoscopy", "Endoscopy"),
+    ("colonoscopia", "Endoscopy", "Colonoscopy"),
+    ("ecografia", "Ultrasound", "Ultrasound"),
+    ("ecotomografia", "Ultrasound", "Ultrasound"),
+    ("ultrasonido", "Ultrasound", "Ultrasound"),
+    ("ultrasound", "Ultrasound", "Ultrasound"),
+    ("tomografia", "CT", "CT Scan"),
+    ("radiografia", "X-ray", "X-ray"),
+    ("electrocardiograma", "Cardiology", "ECG"),
+    ("mamografia", "Imaging", "Mammography"),
+    ("densitometria", "Imaging", "Bone Densitometry"),
+]
+
+
+@dataclass
+class NarrativeResult:
+    title: str
+    category: str
+    report_date: Optional[date]
+    impression: Optional[str]
+    body: str
+
+
+def detect_narrative(full_text: str) -> Optional[NarrativeResult]:
+    """If the text reads like an imaging/narrative report, summarize it as one."""
+    folded = _fold(full_text)
+    hit = next(((cat, title) for kw, cat, title in _MODALITIES if kw in folded), None)
+    if not hit:
+        return None
+    category, title = hit
+
+    # Impression: text after a conclusion keyword.
+    impression = None
+    for kw in ("en suma", "impresion", "conclusion", "impression", "summary", "informe:"):
+        i = folded.find(kw)
+        if i != -1:
+            snippet = full_text[i: i + 400].split("\n\n")[0].strip()
+            impression = snippet[:300]
+            break
+
+    body = full_text.strip()
+    if len(body) > 6000:
+        body = body[:6000] + " …"
+    return NarrativeResult(title=title, category=category,
+                           report_date=_parse_dates(folded), impression=impression, body=body)
+
