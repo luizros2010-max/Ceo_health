@@ -6,14 +6,16 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { api, type Overview as OverviewData } from "../api/client";
+import VitalsEntry from "../components/VitalsEntry";
 
 export default function Overview() {
   const [data, setData] = useState<OverviewData | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  useEffect(() => {
+  function load() {
     api.overview().then(setData).catch((e) => setErr(String(e)));
-  }, []);
+  }
+  useEffect(load, []);
 
   if (err) return <p className="pill bad">{err}</p>;
   if (!data) return <p className="muted">Loading…</p>;
@@ -23,6 +25,7 @@ export default function Overview() {
   return (
     <div>
       <h2>Overview</h2>
+      <VitalsEntry onSaved={load} />
       <div className="stats">
         <div className="stat"><div className="n">{data.stats.documents}</div><div className="l">Documents</div></div>
         <div className="stat"><div className="n">{data.stats.observations}</div><div className="l">Confirmed results</div></div>

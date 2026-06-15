@@ -285,6 +285,12 @@ CATALOG: list[dict] = [
                      "circunferencia abdominal", "circunferencia de cintura"],
         "conversions": [("in", "cm", 2.54, 0.0), ("inch", "cm", 2.54, 0.0)],
     },
+    {
+        "slug": "body_weight", "display_name": "Body Weight", "category": "Body",
+        "canonical_unit": "kg", "ref_low": None, "ref_high": None, "higher_is_better": None,
+        "aliases": ["weight", "body weight", "peso", "peso corporal"],
+        "conversions": [("lb", "kg", 0.453592, 0.0), ("lbs", "kg", 0.453592, 0.0)],
+    },
 ]
 
 
