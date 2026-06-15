@@ -275,6 +275,21 @@ export const api = {
     req<{ deleted: number }>(`/reports/${id}`, { method: "DELETE" }),
   healthScore: () => req<HealthScore>("/analysis/score"),
   actionPlan: () => req<ActionPlan>("/analysis/plan"),
+  connectorsStatus: () =>
+    req<{ oura: { configured: boolean }; apple_health: { available: boolean } }>("/connectors/status"),
+  ouraSync: (body: Record<string, unknown>) =>
+    req<{ ok: boolean; added: number; errors: string[]; range: { from: string; to: string } }>(
+      "/connectors/oura/sync",
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) },
+    ),
+  appleHealthUpload: (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return req<{ ok: boolean; added: number; metrics: string[] }>("/connectors/apple-health", {
+      method: "POST",
+      body: fd,
+    });
+  },
   getPatient: () => req<Patient>("/patient"),
   patchPatient: (body: Record<string, unknown>) =>
     req<Patient>("/patient", {

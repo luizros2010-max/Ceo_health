@@ -121,6 +121,13 @@ immediately. Keep your CSV under `data/` (gitignored) — never commit health da
 into `data/imports/`, then from the repo root run `./load_data.sh` — it imports
 every CSV plus the reports JSON in one go (re-running is safe; duplicates are skipped).
 
+**3. Wearables (Connectors page)** — Oura Ring (API) and Apple Health (file import):
+- **Oura:** create a Personal Access Token at cloud.ouraring.com, set `OURA_TOKEN`
+  in `.env` (or paste it on the Connectors page), then *Sync* — pulls resting HR,
+  HRV, sleep, SpO₂, steps. Apple has no cloud API, so export from the iPhone Health
+  app (*Export All Health Data* → `export.zip`) and import it on the Connectors page,
+  or via `python backend/import_apple_health.py path/to/export.zip` for large files.
+
 **2. Lab PDFs via the extraction pipeline (needs an API key)**:
 
 ```bash

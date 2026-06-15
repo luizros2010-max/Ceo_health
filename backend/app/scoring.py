@@ -56,6 +56,12 @@ ANCHORS: dict[str, list[tuple[float, float]]] = {
     "diastolic_bp": [(65, 100), (80, 90), (90, 60), (100, 30)],
     "bmi": [(18.5, 80), (22, 100), (25, 82), (28, 60), (32, 35), (38, 12)],
     "waist_circumference": [(80, 100), (94, 82), (102, 55), (112, 30), (125, 12)],
+    # Fitness & recovery (wearables)
+    "vo2max": [(20, 35), (28, 62), (35, 85), (42, 100), (55, 100)],
+    "resting_heart_rate": [(45, 100), (55, 92), (65, 78), (75, 55), (85, 30), (95, 12)],
+    "hrv": [(15, 35), (30, 62), (50, 85), (70, 100), (100, 100)],
+    "sleep_duration": [(4, 30), (6, 72), (7, 100), (8.5, 100), (9.5, 88), (11, 60)],
+    "spo2": [(90, 35), (94, 72), (96, 90), (98, 100)],
 }
 
 # Domains: (display, weight, [biomarker slugs])
@@ -67,6 +73,7 @@ DOMAINS: list[tuple[str, float, list[str]]] = [
     ("Inflammation / blood", 0.10, ["crp", "hemoglobin", "wbc", "platelets"]),
     ("Hormonal / other", 0.15, ["vitamin_d", "tsh", "psa_total", "uric_acid", "albumin"]),
     ("Body & blood pressure", 0.15, ["bmi", "waist_circumference", "systolic_bp", "diastolic_bp"]),
+    ("Fitness & recovery", 0.15, ["vo2max", "resting_heart_rate", "hrv", "sleep_duration", "spo2"]),
 ]
 
 

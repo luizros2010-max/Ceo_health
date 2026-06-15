@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     extract_model_vision: str = "claude-opus-4-8"
     prompt_version: str = "v1"
 
+    # Oura Ring personal access token (server-side only). Get one at
+    # https://cloud.ouraring.com/personal-access-tokens
+    oura_token: str = ""
+
     # Storage locations (relative paths resolved against repo root).
     db_path: str = "data/ceo_health.db"
     documents_dir: str = "data/documents"
@@ -41,6 +45,10 @@ class Settings(BaseSettings):
     @property
     def has_api_key(self) -> bool:
         return bool(self.anthropic_api_key.strip())
+
+    @property
+    def has_oura(self) -> bool:
+        return bool(self.oura_token.strip())
 
 
 settings = Settings()

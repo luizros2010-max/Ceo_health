@@ -2,6 +2,7 @@ import { NavLink, Route, Routes } from "react-router-dom";
 import Overview from "./pages/Overview";
 import Upload from "./pages/Upload";
 import Documents from "./pages/Documents";
+import Connectors from "./pages/Connectors";
 import DocumentDetail from "./pages/DocumentDetail";
 import BiomarkerTimeline from "./pages/BiomarkerTimeline";
 import Reports from "./pages/Reports";
@@ -21,6 +22,7 @@ export default function App() {
           <NavLink to="/" end>Overview</NavLink>
           <NavLink to="/upload">Upload</NavLink>
           <NavLink to="/documents">Documents</NavLink>
+          <NavLink to="/connectors">Connectors</NavLink>
           <NavLink to="/biomarker">Timelines</NavLink>
           <NavLink to="/reports">Imaging & Reports</NavLink>
           <NavLink to="/score">Health Score</NavLink>
@@ -36,6 +38,7 @@ export default function App() {
           <Route path="/upload" element={<Upload />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/documents/:id" element={<DocumentDetail />} />
+          <Route path="/connectors" element={<Connectors />} />
           <Route path="/biomarker" element={<BiomarkerTimeline />} />
           <Route path="/biomarker/:slug" element={<BiomarkerTimeline />} />
           <Route path="/reports" element={<Reports />} />

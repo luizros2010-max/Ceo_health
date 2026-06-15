@@ -291,6 +291,44 @@ CATALOG: list[dict] = [
         "aliases": ["weight", "body weight", "peso", "peso corporal"],
         "conversions": [("lb", "kg", 0.453592, 0.0), ("lbs", "kg", 0.453592, 0.0)],
     },
+    # Wearables (Oura, Apple Health)
+    {
+        "slug": "resting_heart_rate", "display_name": "Resting Heart Rate", "category": "Fitness",
+        "canonical_unit": "bpm", "ref_low": 40, "ref_high": 70, "higher_is_better": False,
+        "aliases": ["resting heart rate", "rhr", "resting hr", "frecuencia cardiaca en reposo",
+                     "lowest heart rate"],
+        "conversions": [],
+    },
+    {
+        "slug": "hrv", "display_name": "Heart Rate Variability", "category": "Fitness",
+        "canonical_unit": "ms", "ref_low": None, "ref_high": None, "higher_is_better": True,
+        "aliases": ["hrv", "heart rate variability", "rmssd", "sdnn", "average hrv"],
+        "conversions": [],
+    },
+    {
+        "slug": "vo2max", "display_name": "VO2 Max", "category": "Fitness",
+        "canonical_unit": "mL/kg/min", "ref_low": None, "ref_high": None, "higher_is_better": True,
+        "aliases": ["vo2max", "vo2 max", "cardio fitness", "vo2"],
+        "conversions": [],
+    },
+    {
+        "slug": "sleep_duration", "display_name": "Sleep Duration", "category": "Fitness",
+        "canonical_unit": "h", "ref_low": 7, "ref_high": 9, "higher_is_better": None,
+        "aliases": ["sleep duration", "total sleep", "time asleep", "sleep", "horas de sueno"],
+        "conversions": [],
+    },
+    {
+        "slug": "spo2", "display_name": "Blood Oxygen (SpO2)", "category": "Fitness",
+        "canonical_unit": "%", "ref_low": 95, "ref_high": 100, "higher_is_better": True,
+        "aliases": ["spo2", "blood oxygen", "oxygen saturation", "saturacion de oxigeno"],
+        "conversions": [],
+    },
+    {
+        "slug": "steps", "display_name": "Daily Steps", "category": "Fitness",
+        "canonical_unit": "steps", "ref_low": None, "ref_high": None, "higher_is_better": True,
+        "aliases": ["steps", "step count", "daily steps", "pasos"],
+        "conversions": [],
+    },
 ]
 
 
