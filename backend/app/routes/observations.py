@@ -4,11 +4,12 @@ from __future__ import annotations
 from datetime import date
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlmodel import Session, select
 
 from ..auth import current_patient_id
 from ..db import get_session
+from ..ingest.imports import import_csv_text
 from ..ingest.normalize import convert_value
 from ..models import Biomarker, BiomarkerAlias, Observation, Patient, SourceDocument
 from ..schemas import ManualObservation, ObservationPatch
@@ -99,6 +100,21 @@ def create_manual_observation(
     session.commit()
     session.refresh(obs)
     return obs
+
+
+@router.post("/import-csv")
+async def import_csv_upload(
+    file: UploadFile = File(...), session: Session = Depends(get_session),
+    pid: int = Depends(current_patient_id),
+):
+    """Import a long-format CSV (biomarker,date,value,unit) into your record."""
+    data = await file.read()
+    try:
+        text = data.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="File must be UTF-8 text/CSV")
+    name = file.filename or "CSV import"
+    return import_csv_text(session, text, name, pid)
 
 
 @router.patch("/{obs_id}")

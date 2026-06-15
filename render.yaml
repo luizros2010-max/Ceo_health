@@ -1,0 +1,26 @@
+# Render.com Blueprint — deploys the app with a persistent disk for your data.
+# Use: render.com -> New -> Blueprint -> connect this repo -> Apply.
+# Note: a persistent disk requires a paid instance (Starter, ~$7/mo) so your
+# data survives restarts. Without a disk, data resets on each deploy.
+services:
+  - type: web
+    name: ceo-health
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true        # stable session signing secret
+      - key: REQUIRE_AUTH
+        value: "true"
+      - key: DB_PATH
+        value: /data/ceo_health.db
+      - key: DOCUMENTS_DIR
+        value: /data/documents
+      # Optional: paste your key in the Render dashboard to enable AI features.
+      # - key: ANTHROPIC_API_KEY
+      #   sync: false
+    disk:
+      name: ceo-data
+      mountPath: /data
+      sizeGB: 1

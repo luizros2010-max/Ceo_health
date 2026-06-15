@@ -243,6 +243,18 @@ export const api = {
     fd.append("file", file);
     return req<IngestSummary>("/documents", { method: "POST", body: fd });
   },
+  importCsv: (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return req<{ imported: number; duplicates: number; skipped: number; unmatched: number; unmatched_names: string[] }>(
+      "/observations/import-csv", { method: "POST", body: fd },
+    );
+  },
+  importReportsJson: (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return req<{ imported: number; duplicates: number }>("/reports/import-json", { method: "POST", body: fd });
+  },
   patchDocument: (id: number, body: Record<string, unknown>) =>
     req<DocumentRow>(`/documents/${id}`, {
       method: "PATCH",

@@ -1,15 +1,30 @@
 """Narrative / imaging report routes (MRI, echo, endoscopy, specialist notes)."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlmodel import Session, select
 
 from ..auth import current_patient_id
 from ..db import get_session
+from ..ingest.imports import import_reports_json
 from ..models import NarrativeReport, Patient
 from ..schemas import NarrativeReportIn
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
+
+
+@router.post("/import-json")
+async def import_reports_upload(
+    file: UploadFile = File(...), session: Session = Depends(get_session),
+    pid: int = Depends(current_patient_id),
+):
+    """Import narrative/imaging reports from a JSON file into your record."""
+    data = await file.read()
+    try:
+        text = data.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="File must be UTF-8 JSON")
+    return import_reports_json(session, text, pid)
 
 
 @router.get("")

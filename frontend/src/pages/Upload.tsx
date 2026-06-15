@@ -75,7 +75,49 @@ export default function Upload() {
         </div>
       )}
 
+      <ImportData />
       <ManualEntry />
+    </div>
+  );
+}
+
+function ImportData() {
+  const csvRef = useRef<HTMLInputElement>(null);
+  const jsonRef = useRef<HTMLInputElement>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function doCsv(file: File) {
+    setBusy(true); setMsg(null);
+    try {
+      const r = await api.importCsv(file);
+      setMsg(`${file.name}: imported ${r.imported}, duplicates ${r.duplicates}, unmatched ${r.unmatched}`);
+    } catch (e) { setMsg(String(e)); } finally { setBusy(false); }
+  }
+  async function doJson(file: File) {
+    setBusy(true); setMsg(null);
+    try {
+      const r = await api.importReportsJson(file);
+      setMsg(`${file.name}: imported ${r.imported} reports, duplicates ${r.duplicates}`);
+    } catch (e) { setMsg(String(e)); } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="panel" style={{ marginTop: 18 }}>
+      <h3>Import data files</h3>
+      <p className="muted" style={{ fontSize: 13 }}>
+        Load history from a CSV (<span className="mono">biomarker,date,value,unit</span>) or a reports JSON —
+        e.g. the files from your data bundle.
+      </p>
+      <div className="row">
+        <button className="ghost" onClick={() => csvRef.current?.click()} disabled={busy}>Import CSV…</button>
+        <input ref={csvRef} type="file" accept=".csv" style={{ display: "none" }}
+          onChange={(e) => e.target.files && doCsv(e.target.files[0])} />
+        <button className="ghost" onClick={() => jsonRef.current?.click()} disabled={busy}>Import reports JSON…</button>
+        <input ref={jsonRef} type="file" accept=".json" style={{ display: "none" }}
+          onChange={(e) => e.target.files && doJson(e.target.files[0])} />
+        {msg && <span className="muted">{msg}</span>}
+      </div>
     </div>
   );
 }
