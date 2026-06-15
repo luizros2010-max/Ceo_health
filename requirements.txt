@@ -7,6 +7,9 @@ PyMuPDF>=1.24
 rapidfuzz>=3.9
 anthropic>=0.40
 
+# Lets Python 3.9 evaluate `X | Y` type syntax used in some models.
+eval_type_backport>=0.2; python_version < "3.10"
+
 # dev / test
 pytest>=8.0
 httpx>=0.27
