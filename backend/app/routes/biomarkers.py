@@ -42,19 +42,26 @@ def biomarker_timeline(slug: str, session: Session = Depends(get_session)):
         .where(Observation.biomarker_id == bm.id, Observation.status == "confirmed")
         .order_by(Observation.collection_date)
     ).all()
-    points = [
-        {
-            "date": o.collection_date,
-            "value": o.value_num,
-            "operator": o.operator,
-            "refLow": o.ref_low,
-            "refHigh": o.ref_high,
-            "sourceDocId": o.source_document_id,
-            "status": o.status,
-        }
-        for o in obs
-        if o.value_num is not None and o.collection_date is not None
-    ]
+    doc_names: dict[int, str] = {}
+    points = []
+    for o in obs:
+        if o.value_num is None or o.collection_date is None:
+            continue
+        if o.source_document_id not in doc_names:
+            d = session.get(SourceDocument, o.source_document_id)
+            doc_names[o.source_document_id] = d.original_name if d else "Unknown"
+        points.append(
+            {
+                "date": o.collection_date,
+                "value": o.value_num,
+                "operator": o.operator,
+                "refLow": o.ref_low,
+                "refHigh": o.ref_high,
+                "sourceDocId": o.source_document_id,
+                "source": doc_names[o.source_document_id],
+                "status": o.status,
+            }
+        )
     return {
         "biomarker": {"slug": bm.slug, "display_name": bm.display_name, "category": bm.category},
         "unit": bm.canonical_unit,

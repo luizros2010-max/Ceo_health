@@ -14,6 +14,7 @@ export default function TrendChart({ timeline }: { timeline: Timeline }) {
   const data = timeline.points.map((p) => ({
     date: p.date,
     value: p.value,
+    source: p.source,
     inRange:
       (timeline.refLow == null || p.value >= timeline.refLow) &&
       (timeline.refHigh == null || p.value <= timeline.refHigh),
@@ -53,7 +54,10 @@ export default function TrendChart({ timeline }: { timeline: Timeline }) {
         <Tooltip
           contentStyle={{ background: "#1f232c", border: "1px solid #2a2f3a", borderRadius: 8 }}
           labelStyle={{ color: "#e7ebf0" }}
-          formatter={(v: number) => [`${v} ${timeline.unit}`, timeline.biomarker.display_name]}
+          formatter={(v: number, _n, p: { payload?: { source?: string } }) => [
+            `${v} ${timeline.unit}`,
+            p?.payload?.source || timeline.biomarker.display_name,
+          ]}
         />
         <Line
           type="monotone"

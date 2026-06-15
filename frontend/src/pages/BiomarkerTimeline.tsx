@@ -8,6 +8,7 @@ export default function BiomarkerTimeline() {
   const navigate = useNavigate();
   const [biomarkers, setBiomarkers] = useState<Biomarker[]>([]);
   const [timeline, setTimeline] = useState<Timeline | null>(null);
+  const [source, setSource] = useState<string>("all");
 
   useEffect(() => {
     api.biomarkers().then((b) => {
@@ -20,8 +21,14 @@ export default function BiomarkerTimeline() {
   }, [slug, navigate]);
 
   useEffect(() => {
+    setSource("all");
     if (slug) api.timeline(slug).then(setTimeline).catch(() => setTimeline(null));
   }, [slug]);
+
+  const sources = timeline ? Array.from(new Set(timeline.points.map((p) => p.source))) : [];
+  const filtered: Timeline | null = timeline
+    ? { ...timeline, points: source === "all" ? timeline.points : timeline.points.filter((p) => p.source === source) }
+    : null;
 
   return (
     <div>
@@ -34,16 +41,22 @@ export default function BiomarkerTimeline() {
             </option>
           ))}
         </select>
-        {timeline && (
+        {sources.length > 1 && (
+          <select value={source} onChange={(e) => setSource(e.target.value)}>
+            <option value="all">All sources ({sources.length})</option>
+            {sources.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        )}
+        {filtered && (
           <span className="muted">
-            {timeline.points.length} point{timeline.points.length === 1 ? "" : "s"} ·{" "}
-            ref {timeline.refLow ?? "–"}–{timeline.refHigh ?? "–"} {timeline.unit}
+            {filtered.points.length} point{filtered.points.length === 1 ? "" : "s"} ·{" "}
+            ref {filtered.refLow ?? "–"}–{filtered.refHigh ?? "–"} {filtered.unit}
           </span>
         )}
       </div>
 
       <div className="panel">
-        {timeline ? <TrendChart timeline={timeline} /> : <p className="muted">Loading…</p>}
+        {filtered ? <TrendChart timeline={filtered} /> : <p className="muted">Loading…</p>}
       </div>
     </div>
   );

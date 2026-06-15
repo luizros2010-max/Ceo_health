@@ -5,6 +5,8 @@ user-triggered Claude extraction/analysis calls made server-side.
 """
 from __future__ import annotations
 
+import asyncio
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -19,10 +21,43 @@ from .db import init_db
 from .routes import analysis, biomarkers, connectors, documents, observations, patient, reports
 
 
+log = logging.getLogger("ceo_health")
+
+
+async def _oura_auto_sync_loop():
+    """Periodically sync Oura in the background (non-blocking, errors swallowed)."""
+    from sqlmodel import Session
+
+    from .config import settings
+    from .connectors.oura import sync_oura
+    from .db import engine
+
+    interval = max(1, settings.oura_sync_interval_hours) * 3600
+    while True:
+        try:
+            with Session(engine) as session:
+                result = await asyncio.to_thread(
+                    sync_oura, session, settings.oura_token, settings.oura_sync_days
+                )
+            log.info("Oura auto-sync: %s new readings", result.get("added"))
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Oura auto-sync failed: %s", exc)
+        await asyncio.sleep(interval)
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
-    yield
+    from .config import settings
+
+    task = None
+    if settings.has_oura and settings.oura_auto_sync:
+        task = asyncio.create_task(_oura_auto_sync_loop())
+    try:
+        yield
+    finally:
+        if task:
+            task.cancel()
 
 
 app = FastAPI(title="CEO of Your Own Health", version="0.1.0", lifespan=lifespan)

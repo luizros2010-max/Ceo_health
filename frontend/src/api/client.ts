@@ -53,6 +53,7 @@ export interface TimelinePoint {
   refLow: number | null;
   refHigh: number | null;
   sourceDocId: number;
+  source: string;
   status: string;
 }
 

@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # Oura Ring personal access token (server-side only). Get one at
     # https://cloud.ouraring.com/personal-access-tokens
     oura_token: str = ""
+    oura_auto_sync: bool = True          # sync on startup + on an interval when a token is set
+    oura_sync_interval_hours: int = 12
+    oura_sync_days: int = 14             # lookback window per auto-sync
 
     # Storage locations (relative paths resolved against repo root).
     db_path: str = "data/ceo_health.db"
