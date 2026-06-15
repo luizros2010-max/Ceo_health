@@ -93,13 +93,19 @@ def extract_from_text(session: Session, full_text: str) -> RulesResult:
             continue
         # alias words separated by any non-alphanumeric run
         pattern = r"\b" + r"\W+".join(re.escape(w) for w in norm.split()) + r"\b"
-        m = re.search(pattern, folded)
-        if not m or overlaps(m.start(), m.end()):
+        # Use the first occurrence that isn't already claimed and has a value after it,
+        # so e.g. plain "Hemoglobina 14.8" is still found after "Hemoglobina Glicosilada".
+        m = vm = None
+        for cand in re.finditer(pattern, folded):
+            if overlaps(cand.start(), cand.end()):
+                continue
+            cvm = re.search(rf"({_NUM})\s*({_UNIT})?", folded[cand.end(): cand.end() + 60])
+            if cvm:
+                m, vm = cand, cvm
+                break
+        if not m or not vm:
             continue
         window = folded[m.end(): m.end() + 60]
-        vm = re.search(rf"({_NUM})\s*({_UNIT})?", window)
-        if not vm:
-            continue
         consumed.append((m.start(), m.end() + vm.end()))
         value_raw = vm.group(1).replace(" ", "")
         try:
