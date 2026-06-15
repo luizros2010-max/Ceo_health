@@ -1,4 +1,30 @@
-# Self-hosting for family use (private, via Tailscale)
+# Option A — Online (Render), reachable from any browser
+
+This deploys the **full app** to the cloud so you get a public URL (with login).
+Tradeoff: your data lives on the host's server, and the persistent disk needs a
+paid instance (Render Starter, ~$7/mo) so data survives restarts.
+
+1. Push this repo to GitHub (can be **private**). It includes `Dockerfile` + `render.yaml`.
+2. Go to **https://render.com**, sign up, and connect your GitHub.
+3. **New + → Blueprint** → pick this repo → choose the branch
+   `claude/ceo-health-records-xc2kgo` → **Apply**. Render reads `render.yaml`
+   and creates the service + a 1 GB disk + a session secret.
+4. Wait for the build, then open the URL it gives you (e.g. `https://ceo-health.onrender.com`).
+5. **Create your profile**, then go to **Upload → Import data files** and load your
+   CSVs + reports JSON (from the data bundle) — or upload lab PDFs directly.
+6. (Optional) In the Render dashboard → Environment, add `ANTHROPIC_API_KEY` to
+   enable the AI features.
+
+To host other family members: each one just **creates their own profile** at the same
+URL (data is isolated per person). You're the admin (first profile).
+
+Privacy note: on a public host, treat the data as sensitive — use strong passwords,
+keep the URL private, and prefer the Tailscale option below if you'd rather keep data
+entirely off third-party servers.
+
+---
+
+# Option B — Self-hosting for family use (private, via Tailscale)
 
 This runs the **full app** on one always-on machine at home and lets family members
 reach it from anywhere over **Tailscale** — a free private network (WireGuard VPN).
