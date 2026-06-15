@@ -25,12 +25,28 @@ def _set_sqlite_pragma(dbapi_connection, _connection_record):
     cursor.close()
 
 
+def _migrate_sqlite() -> None:
+    """Add columns introduced after a DB was first created (SQLite ADD COLUMN)."""
+    from sqlalchemy import text
+
+    wanted = {
+        "patient": {"username": "VARCHAR", "password_hash": "VARCHAR"},
+    }
+    with engine.begin() as conn:
+        for table, cols in wanted.items():
+            existing = {row[1] for row in conn.execute(text(f"PRAGMA table_info({table})"))}
+            for col, decl in cols.items():
+                if col not in existing:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {decl}"))
+
+
 def init_db() -> None:
     """Create tables and seed the canonical biomarker catalog + a default patient."""
     # Import models so they register on SQLModel.metadata before create_all.
     from . import models  # noqa: F401
 
     SQLModel.metadata.create_all(engine)
+    _migrate_sqlite()
 
     from .seed.biomarkers import seed_biomarkers, seed_default_patient
 

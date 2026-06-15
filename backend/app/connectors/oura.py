@@ -32,13 +32,13 @@ def _get(client, token: str, path: str, start: str, end: str):
     return r.json().get("data", [])
 
 
-def sync_oura(session: Session, token: str, days: int = 90) -> dict:
+def sync_oura(session: Session, token: str, days: int = 90, patient_id: int | None = None) -> dict:
     import httpx
 
     end = date.today()
     start = end - timedelta(days=days)
     s, e = start.isoformat(), end.isoformat()
-    doc = get_source(session, SOURCE_NAME)
+    doc = get_source(session, SOURCE_NAME, patient_id)
     added = 0
     errors: list[str] = []
 

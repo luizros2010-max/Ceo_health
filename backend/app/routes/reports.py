@@ -4,6 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
+from ..auth import current_patient_id
 from ..db import get_session
 from ..models import NarrativeReport, Patient
 from ..schemas import NarrativeReportIn
@@ -12,9 +13,9 @@ router = APIRouter(prefix="/api/reports", tags=["reports"])
 
 
 @router.get("")
-def list_reports(session: Session = Depends(get_session)):
+def list_reports(session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
     reports = session.exec(
-        select(NarrativeReport).order_by(NarrativeReport.report_date.desc())
+        select(NarrativeReport).where(NarrativeReport.patient_id == pid).order_by(NarrativeReport.report_date.desc())
     ).all()
     return [
         {
@@ -31,16 +32,16 @@ def list_reports(session: Session = Depends(get_session)):
 
 
 @router.get("/{report_id}")
-def get_report(report_id: int, session: Session = Depends(get_session)):
+def get_report(report_id: int, session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
     r = session.get(NarrativeReport, report_id)
-    if not r:
+    if not r or r.patient_id != pid:
         raise HTTPException(status_code=404, detail="Report not found")
     return r
 
 
 @router.post("")
-def create_report(body: NarrativeReportIn, session: Session = Depends(get_session)):
-    patient = session.exec(select(Patient)).first()
+def create_report(body: NarrativeReportIn, session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
+    patient = session.get(Patient, pid)
     report = NarrativeReport(
         patient_id=patient.id if patient else None,
         title=body.title,
@@ -57,9 +58,9 @@ def create_report(body: NarrativeReportIn, session: Session = Depends(get_sessio
 
 
 @router.delete("/{report_id}")
-def delete_report(report_id: int, session: Session = Depends(get_session)):
+def delete_report(report_id: int, session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
     r = session.get(NarrativeReport, report_id)
-    if not r:
+    if not r or r.patient_id != pid:
         raise HTTPException(status_code=404, detail="Report not found")
     session.delete(r)
     session.commit()

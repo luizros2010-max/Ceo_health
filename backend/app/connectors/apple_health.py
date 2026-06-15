@@ -51,7 +51,7 @@ def _open(path: str):
     return open(path, "rb")
 
 
-def import_apple_health(session: Session, path: str) -> dict:
+def import_apple_health(session: Session, path: str, patient_id: int | None = None) -> dict:
     # Aggregators
     avg: dict[tuple[str, date], list[float]] = defaultdict(lambda: [0.0, 0])  # sum, count
     total: dict[tuple[str, date], float] = defaultdict(float)
@@ -100,7 +100,7 @@ def import_apple_health(session: Session, path: str) -> dict:
     finally:
         fh.close()
 
-    doc = get_source(session, SOURCE_NAME)
+    doc = get_source(session, SOURCE_NAME, patient_id)
     added = 0
 
     def TYPES_unit(slug):

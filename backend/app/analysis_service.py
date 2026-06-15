@@ -43,11 +43,12 @@ def _in_range(value, low, high) -> Optional[bool]:
 def build_slice(
     session: Session,
     *,
+    patient_id: Optional[int] = None,
     biomarker_slugs: Optional[list[str]] = None,
     include_reports: bool = False,
 ) -> dict:
     """Assemble the minimal payload that would be shared with Claude."""
-    patient = session.exec(select(Patient)).first()
+    patient = session.get(Patient, patient_id) if patient_id else session.exec(select(Patient)).first()
     subject = {
         "age": _age(patient.date_of_birth) if patient else None,
         "sex": patient.sex if patient else None,
@@ -61,16 +62,15 @@ def build_slice(
 
     series = []
     for bm in biomarkers:
-        obs = session.exec(
-            select(Observation)
-            .where(
-                Observation.biomarker_id == bm.id,
-                Observation.status == "confirmed",
-                Observation.value_num.is_not(None),
-                Observation.collection_date.is_not(None),
-            )
-            .order_by(Observation.collection_date)
-        ).all()
+        stmt = select(Observation).where(
+            Observation.biomarker_id == bm.id,
+            Observation.status == "confirmed",
+            Observation.value_num.is_not(None),
+            Observation.collection_date.is_not(None),
+        )
+        if patient_id is not None:
+            stmt = stmt.where(Observation.patient_id == patient_id)
+        obs = session.exec(stmt.order_by(Observation.collection_date)).all()
         if not obs:
             continue
         points = [
@@ -96,7 +96,10 @@ def build_slice(
     payload = {"subject": subject, "biomarkers": series}
 
     if include_reports:
-        reports = session.exec(select(NarrativeReport)).all()
+        rstmt = select(NarrativeReport)
+        if patient_id is not None:
+            rstmt = rstmt.where(NarrativeReport.patient_id == patient_id)
+        reports = session.exec(rstmt).all()
         payload["reports"] = [
             {
                 "title": r.title,

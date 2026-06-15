@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from sqlmodel import Session
 
 from ..analysis_service import build_slice, compute_flags, run_analysis, stream_analysis
+from ..auth import current_patient_id
 from ..config import settings
 from ..db import get_session
 from ..plan_service import compute_plan
@@ -40,10 +41,11 @@ def analysis_status():
 
 
 @router.post("/preview")
-def analysis_preview(body: AnalysisRequest, session: Session = Depends(get_session)):
+def analysis_preview(body: AnalysisRequest, session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
     """Show exactly what would be shared with Claude — for the 'what will be shared' panel."""
     payload = build_slice(
         session,
+        patient_id=pid,
         biomarker_slugs=body.biomarker_slugs,
         include_reports=body.include_reports,
     )
@@ -63,16 +65,17 @@ def analysis_preview(body: AnalysisRequest, session: Session = Depends(get_sessi
 
 
 @router.post("/flags")
-def analysis_flags(body: AnalysisRequest, session: Session = Depends(get_session)):
+def analysis_flags(body: AnalysisRequest, session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
     """Deterministic trend flags only — works offline, no API key required."""
-    payload = build_slice(session, biomarker_slugs=body.biomarker_slugs)
+    payload = build_slice(session, patient_id=pid, biomarker_slugs=body.biomarker_slugs)
     return {"flags": compute_flags(payload)}
 
 
 @router.post("/run")
-def analysis_run(body: AnalysisRequest, session: Session = Depends(get_session)):
+def analysis_run(body: AnalysisRequest, session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
     payload = build_slice(
         session,
+        patient_id=pid,
         biomarker_slugs=body.biomarker_slugs,
         include_reports=body.include_reports,
     )
@@ -83,15 +86,15 @@ def analysis_run(body: AnalysisRequest, session: Session = Depends(get_session))
 
 
 @router.get("/score")
-def analysis_score(session: Session = Depends(get_session)):
+def analysis_score(session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
     """Transparent health score vs. age-peers (deterministic; no key needed)."""
-    return compute_score(session)
+    return compute_score(session, pid)
 
 
 @router.get("/plan")
-def analysis_plan(session: Session = Depends(get_session)):
+def analysis_plan(session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
     """Action plan: score-gap targets + workout/nutrition/lifestyle levers (deterministic)."""
-    return compute_plan(session)
+    return compute_plan(session, pid)
 
 
 PLAN_QUESTION = (
@@ -103,23 +106,23 @@ PLAN_QUESTION = (
 
 
 @router.post("/plan/stream")
-def analysis_plan_stream(session: Session = Depends(get_session)):
+def analysis_plan_stream(session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
     """Stream an AI-drafted plan from the minimal slice (needs a key)."""
     if not settings.has_api_key:
         return JSONResponse(status_code=400, content={"ok": False, "error": "no_api_key"})
-    payload = build_slice(session, include_reports=True)
+    payload = build_slice(session, patient_id=pid, include_reports=True)
     flags = compute_flags(payload)
     gen = stream_analysis(payload, flags, question=PLAN_QUESTION)
     return StreamingResponse(gen, media_type="text/plain; charset=utf-8")
 
 
 @router.post("/stream")
-def analysis_stream(body: AnalysisRequest, session: Session = Depends(get_session)):
+def analysis_stream(body: AnalysisRequest, session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
     """Stream the AI summary token-by-token (text/plain chunks)."""
     if not settings.has_api_key:
         return JSONResponse(status_code=400, content={"ok": False, "error": "no_api_key"})
     payload = build_slice(
-        session, biomarker_slugs=body.biomarker_slugs, include_reports=body.include_reports
+        session, patient_id=pid, biomarker_slugs=body.biomarker_slugs, include_reports=body.include_reports
     )
     flags = compute_flags(payload)
     gen = stream_analysis(payload, flags, question=body.question)

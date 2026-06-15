@@ -21,6 +21,8 @@ class Patient(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
+    username: Optional[str] = Field(default=None, unique=True, index=True)
+    password_hash: Optional[str] = None
     date_of_birth: Optional[date] = None
     sex: Optional[str] = None  # 'male' | 'female' | other — feeds sex-specific ranges
     created_at: datetime = Field(default_factory=_now)
@@ -31,7 +33,7 @@ class SourceDocument(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     patient_id: Optional[int] = Field(default=None, foreign_key="patient.id", index=True)
-    file_sha256: str = Field(unique=True, index=True)
+    file_sha256: str = Field(index=True)  # dedup is scoped per-patient (see pipeline)
     file_path: str
     original_name: str
     mime_type: str

@@ -56,6 +56,12 @@ start.bat             # Windows
 To load your data first, drop your CSV/JSON files into `data/imports/` and run
 `./load_data.sh`. The manual steps below are equivalent.
 
+**Accounts:** the app requires a login (multi-patient). On first open, **create a
+profile** — the first profile claims any data already loaded; additional family
+members get their own isolated profiles. For **family/self-host access over a private
+network, see [DEPLOY.md](DEPLOY.md)** (Tailscale). For single-user local-only, set
+`REQUIRE_AUTH=false` in `.env`.
+
 ### 1. Backend
 
 ```bash

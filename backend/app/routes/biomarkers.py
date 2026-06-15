@@ -4,6 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
+from ..auth import current_patient_id
 from ..db import get_session
 from ..models import Biomarker, Observation, SourceDocument
 
@@ -11,10 +12,10 @@ router = APIRouter(prefix="/api", tags=["biomarkers"])
 
 
 @router.get("/biomarkers")
-def list_biomarkers(session: Session = Depends(get_session)):
+def list_biomarkers(session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
     biomarkers = session.exec(select(Biomarker).order_by(Biomarker.category, Biomarker.display_name)).all()
     confirmed = session.exec(
-        select(Observation).where(Observation.status == "confirmed")
+        select(Observation).where(Observation.status == "confirmed", Observation.patient_id == pid)
     ).all()
     have_data = {o.biomarker_id for o in confirmed if o.biomarker_id}
     return [
@@ -33,13 +34,14 @@ def list_biomarkers(session: Session = Depends(get_session)):
 
 
 @router.get("/biomarkers/{slug}/timeline")
-def biomarker_timeline(slug: str, session: Session = Depends(get_session)):
+def biomarker_timeline(slug: str, session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
     bm = session.exec(select(Biomarker).where(Biomarker.slug == slug)).first()
     if not bm:
         raise HTTPException(status_code=404, detail="Unknown biomarker")
     obs = session.exec(
         select(Observation)
-        .where(Observation.biomarker_id == bm.id, Observation.status == "confirmed")
+        .where(Observation.biomarker_id == bm.id, Observation.status == "confirmed",
+               Observation.patient_id == pid)
         .order_by(Observation.collection_date)
     ).all()
     doc_names: dict[int, str] = {}
@@ -73,13 +75,13 @@ def biomarker_timeline(slug: str, session: Session = Depends(get_session)):
 
 
 @router.get("/overview")
-def overview(session: Session = Depends(get_session)):
-    docs = session.exec(select(SourceDocument)).all()
+def overview(session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
+    docs = session.exec(select(SourceDocument).where(SourceDocument.patient_id == pid)).all()
     confirmed = session.exec(
-        select(Observation).where(Observation.status == "confirmed")
+        select(Observation).where(Observation.status == "confirmed", Observation.patient_id == pid)
     ).all()
     needs_review = session.exec(
-        select(Observation).where(Observation.status == "needs_review")
+        select(Observation).where(Observation.status == "needs_review", Observation.patient_id == pid)
     ).all()
 
     # Latest confirmed value per biomarker.

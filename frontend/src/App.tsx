@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
+import { api } from "./api/client";
+import Login from "./pages/Login";
 import Overview from "./pages/Overview";
 import Upload from "./pages/Upload";
 import Documents from "./pages/Documents";
@@ -13,11 +16,30 @@ import Report from "./pages/Report";
 import Review from "./pages/Review";
 
 export default function App() {
+  const [profile, setProfile] = useState<{ name: string } | null | undefined>(undefined);
+
+  function refresh() {
+    api.authWhoami().then((p) => setProfile(p)).catch(() => setProfile(null));
+  }
+  useEffect(refresh, []);
+
+  async function logout() {
+    await api.authLogout();
+    setProfile(null);
+  }
+
+  if (profile === undefined) {
+    return <div style={{ padding: 40, color: "var(--muted)" }}>Loading…</div>;
+  }
+  if (profile === null) {
+    return <Login onAuthed={refresh} />;
+  }
+
   return (
     <div className="layout">
       <aside className="sidebar">
         <h1>CEO of Your Health</h1>
-        <div className="tag">your longitudinal record</div>
+        <div className="tag">{profile.name}</div>
         <nav className="nav">
           <NavLink to="/" end>Overview</NavLink>
           <NavLink to="/upload">Upload</NavLink>
@@ -31,6 +53,9 @@ export default function App() {
           <NavLink to="/report">Doctor Report</NavLink>
           <NavLink to="/review">Review</NavLink>
         </nav>
+        <button className="ghost" onClick={logout} style={{ marginTop: 18, width: "100%" }}>
+          Sign out
+        </button>
       </aside>
       <main className="content">
         <Routes>

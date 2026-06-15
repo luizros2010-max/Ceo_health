@@ -14,15 +14,17 @@ from ..ingest.normalize import convert_value, match_biomarker
 from ..models import Observation, Patient, SourceDocument
 
 
-def get_source(session: Session, name: str) -> SourceDocument:
-    doc = session.exec(
-        select(SourceDocument).where(SourceDocument.original_name == name)
-    ).first()
+def get_source(session: Session, name: str, patient_id: int | None = None) -> SourceDocument:
+    stmt = select(SourceDocument).where(SourceDocument.original_name == name)
+    if patient_id is not None:
+        stmt = stmt.where(SourceDocument.patient_id == patient_id)
+    doc = session.exec(stmt).first()
     if doc:
         return doc
-    patient = session.exec(select(Patient)).first()
+    pid = patient_id if patient_id is not None else (
+        (p := session.exec(select(Patient)).first()) and p.id)
     doc = SourceDocument(
-        patient_id=patient.id if patient else None,
+        patient_id=pid,
         file_sha256=f"connector:{name}",
         file_path="",
         original_name=name,
@@ -65,11 +67,10 @@ def upsert_reading(
         session.add(existing)
         return False
 
-    patient = session.exec(select(Patient)).first()
     session.add(
         Observation(
             source_document_id=doc.id,
-            patient_id=patient.id if patient else None,
+            patient_id=doc.patient_id,
             raw_name=slug_or_name,
             raw_value=str(value),
             raw_unit=unit,

@@ -7,6 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 
+from ..auth import current_patient_id
 from ..db import get_session
 from ..ingest.normalize import convert_value
 from ..models import Biomarker, BiomarkerAlias, Observation, Patient, SourceDocument
@@ -23,8 +24,9 @@ def list_observations(
     date_from: Optional[date] = Query(default=None, alias="from"),
     date_to: Optional[date] = Query(default=None, alias="to"),
     session: Session = Depends(get_session),
+    pid: int = Depends(current_patient_id),
 ):
-    stmt = select(Observation)
+    stmt = select(Observation).where(Observation.patient_id == pid)
     if biomarker:
         bm = session.exec(select(Biomarker).where(Biomarker.slug == biomarker)).first()
         if not bm:
@@ -40,9 +42,9 @@ def list_observations(
 
 
 @router.get("/review")
-def review_queue(session: Session = Depends(get_session)):
+def review_queue(session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
     rows = session.exec(
-        select(Observation).where(Observation.status == "needs_review")
+        select(Observation).where(Observation.status == "needs_review", Observation.patient_id == pid)
     ).all()
     out = []
     for o in rows:
@@ -66,12 +68,12 @@ def review_queue(session: Session = Depends(get_session)):
 
 @router.post("")
 def create_manual_observation(
-    body: ManualObservation, session: Session = Depends(get_session)
+    body: ManualObservation, session: Session = Depends(get_session), pid: int = Depends(current_patient_id)
 ):
     bm = session.exec(select(Biomarker).where(Biomarker.slug == body.biomarker_slug)).first()
     if not bm:
         raise HTTPException(status_code=404, detail="Unknown biomarker slug")
-    patient = session.exec(select(Patient)).first()
+    patient = session.get(Patient, pid)
 
     # Manual entries are confirmed immediately (the human is the source).
     conv = convert_value(session, bm, body.value_num, body.unit)
@@ -101,10 +103,11 @@ def create_manual_observation(
 
 @router.patch("/{obs_id}")
 def patch_observation(
-    obs_id: int, patch: ObservationPatch, session: Session = Depends(get_session)
+    obs_id: int, patch: ObservationPatch, session: Session = Depends(get_session),
+    pid: int = Depends(current_patient_id),
 ):
     obs = session.get(Observation, obs_id)
-    if not obs:
+    if not obs or obs.patient_id != pid:
         raise HTTPException(status_code=404, detail="Observation not found")
 
     # Re-map to a different biomarker, optionally teaching the catalog a new alias.
@@ -159,15 +162,18 @@ def _learn_alias(session: Session, biomarker_id: int, raw_name: str) -> None:
 
 
 def _manual_document_id(session: Session, patient: Optional[Patient]) -> int:
-    """A single synthetic 'Manual entry' source document groups hand-entered values."""
+    """A per-patient synthetic 'Manual entry' source document groups hand-entered values."""
+    pid = patient.id if patient else None
     doc = session.exec(
-        select(SourceDocument).where(SourceDocument.source_type == "manual")
+        select(SourceDocument).where(
+            SourceDocument.source_type == "manual", SourceDocument.patient_id == pid
+        )
     ).first()
     if doc:
         return doc.id
     doc = SourceDocument(
-        patient_id=patient.id if patient else None,
-        file_sha256="manual-entry",
+        patient_id=pid,
+        file_sha256=f"manual-entry:{pid}",
         file_path="",
         original_name="Manual entry",
         mime_type="text/plain",

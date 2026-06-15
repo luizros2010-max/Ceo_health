@@ -50,16 +50,17 @@ def ingest_document(
     data: bytes,
     mime_type: str,
     original_name: str,
+    patient_id: int | None = None,
 ) -> IngestSummary:
-    digest = None
     from .intake import sha256_bytes
 
     digest = sha256_bytes(data)
 
-    # Dedup at document level by sha256.
-    existing = session.exec(
-        select(SourceDocument).where(SourceDocument.file_sha256 == digest)
-    ).first()
+    # Dedup at document level by sha256, scoped to this patient.
+    dedup = select(SourceDocument).where(SourceDocument.file_sha256 == digest)
+    if patient_id is not None:
+        dedup = dedup.where(SourceDocument.patient_id == patient_id)
+    existing = session.exec(dedup).first()
     if existing:
         counts = _count_observations(session, existing.id)
         return IngestSummary(
@@ -73,7 +74,7 @@ def ingest_document(
         )
 
     _, dest = store_document(data, mime_type, original_name)
-    patient = session.exec(select(Patient)).first()
+    patient = session.get(Patient, patient_id) if patient_id else session.exec(select(Patient)).first()
 
     doc = SourceDocument(
         patient_id=patient.id if patient else None,

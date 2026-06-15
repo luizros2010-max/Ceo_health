@@ -276,6 +276,18 @@ export const api = {
     req<{ deleted: number }>(`/reports/${id}`, { method: "DELETE" }),
   healthScore: () => req<HealthScore>("/analysis/score"),
   actionPlan: () => req<ActionPlan>("/analysis/plan"),
+  authMe: () => req<{ has_profiles: boolean }>("/auth/me"),
+  authWhoami: () =>
+    req<{ id: number; name: string; username: string }>("/auth/session"),
+  authLogin: (body: Record<string, unknown>) =>
+    req<{ id: number; name: string }>("/auth/login", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    }),
+  authRegister: (body: Record<string, unknown>) =>
+    req<{ id: number; name: string }>("/auth/register", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    }),
+  authLogout: () => req<{ ok: boolean }>("/auth/logout", { method: "POST" }),
   connectorsStatus: () =>
     req<{ oura: { configured: boolean }; apple_health: { available: boolean } }>("/connectors/status"),
   ouraSync: (body: Record<string, unknown>) =>

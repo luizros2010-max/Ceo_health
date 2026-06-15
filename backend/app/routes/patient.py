@@ -6,8 +6,9 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlmodel import Session, select
+from sqlmodel import Session
 
+from ..auth import current_patient_id
 from ..db import get_session
 from ..models import Patient
 
@@ -21,19 +22,18 @@ class PatientPatch(BaseModel):
 
 
 @router.get("")
-def get_patient(session: Session = Depends(get_session)):
-    p = session.exec(select(Patient)).first()
+def get_patient(session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
+    p = session.get(Patient, pid)
     if not p:
         raise HTTPException(status_code=404, detail="No patient")
     return p
 
 
 @router.patch("")
-def patch_patient(body: PatientPatch, session: Session = Depends(get_session)):
-    p = session.exec(select(Patient)).first()
+def patch_patient(body: PatientPatch, session: Session = Depends(get_session), pid: int = Depends(current_patient_id)):
+    p = session.get(Patient, pid)
     if not p:
-        p = Patient(name=body.name or "Me")
-        session.add(p)
+        raise HTTPException(status_code=404, detail="No patient")
     if body.name is not None:
         p.name = body.name
     if body.date_of_birth is not None:

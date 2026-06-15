@@ -18,7 +18,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .config import REPO_ROOT
 from .db import init_db
-from .routes import analysis, biomarkers, connectors, documents, observations, patient, reports
+from .routes import analysis, auth, biomarkers, connectors, documents, observations, patient, reports
 
 
 log = logging.getLogger("ceo_health")
@@ -76,6 +76,7 @@ def health():
     return {"status": "ok"}
 
 
+app.include_router(auth.router)
 app.include_router(documents.router)
 app.include_router(observations.router)
 app.include_router(biomarkers.router)

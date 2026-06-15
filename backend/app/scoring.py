@@ -96,16 +96,17 @@ def _age(dob: Optional[date]) -> Optional[int]:
     return t.year - dob.year - ((t.month, t.day) < (dob.month, dob.day))
 
 
-def latest_values(session: Session) -> dict[str, dict]:
-    """Latest confirmed value per biomarker slug."""
+def latest_values(session: Session, patient_id: int | None = None) -> dict[str, dict]:
+    """Latest confirmed value per biomarker slug (optionally scoped to a patient)."""
     out: dict[str, dict] = {}
-    rows = session.exec(
-        select(Observation).where(
-            Observation.status == "confirmed",
-            Observation.value_num.is_not(None),
-            Observation.collection_date.is_not(None),
-        )
-    ).all()
+    stmt = select(Observation).where(
+        Observation.status == "confirmed",
+        Observation.value_num.is_not(None),
+        Observation.collection_date.is_not(None),
+    )
+    if patient_id is not None:
+        stmt = stmt.where(Observation.patient_id == patient_id)
+    rows = session.exec(stmt).all()
     by_bm: dict[int, Observation] = {}
     for o in rows:
         prev = by_bm.get(o.biomarker_id)
@@ -137,9 +138,9 @@ def _band(score: float) -> tuple[str, str]:
     return "well below average for your age", "needs attention"
 
 
-def compute_score(session: Session) -> dict:
-    patient = session.exec(select(Patient)).first()
-    vals = latest_values(session)
+def compute_score(session: Session, patient_id: int | None = None) -> dict:
+    patient = session.get(Patient, patient_id) if patient_id else session.exec(select(Patient)).first()
+    vals = latest_values(session, patient_id)
 
     domains = []
     weighted_sum = 0.0

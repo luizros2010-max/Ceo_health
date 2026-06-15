@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     # Claude API key — used only by the backend extraction/analysis layers.
     anthropic_api_key: str = ""
 
+    # Session signing secret (set a long random value in .env for multi-user/self-host;
+    # if empty, a random per-process key is used and sessions reset on restart).
+    secret_key: str = ""
+    # Require login. Turn off only for single-user local use.
+    require_auth: bool = True
+
     # Models: Opus for hard scans (Phase 3), Sonnet for clean text PDFs.
     extract_model: str = "claude-sonnet-4-6"
     extract_model_vision: str = "claude-opus-4-8"

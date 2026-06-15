@@ -70,9 +70,9 @@ def _max_score_target(slug: str, current: float):
     return target, direction
 
 
-def compute_plan(session: Session) -> dict:
-    score = compute_score(session)
-    vals = latest_values(session)
+def compute_plan(session: Session, patient_id: int | None = None) -> dict:
+    score = compute_score(session, patient_id)
+    vals = latest_values(session, patient_id)
 
     # Targets for below-optimal markers.
     targets = []
