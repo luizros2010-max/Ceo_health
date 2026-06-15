@@ -278,7 +278,21 @@ export const api = {
   actionPlan: () => req<ActionPlan>("/analysis/plan"),
   authMe: () => req<{ has_profiles: boolean }>("/auth/me"),
   authWhoami: () =>
-    req<{ id: number; name: string; username: string }>("/auth/session"),
+    req<{ id: number; name: string; username: string; is_admin: boolean }>("/auth/session"),
+  listProfiles: () =>
+    req<{ id: number; name: string; username: string; is_admin: boolean; is_you: boolean; observations: number }[]>(
+      "/auth/profiles",
+    ),
+  createProfile: (body: Record<string, unknown>) =>
+    req<{ id: number }>("/auth/profiles", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    }),
+  resetProfilePassword: (id: number, password: string) =>
+    req<{ ok: boolean }>(`/auth/profiles/${id}/reset-password`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password }),
+    }),
+  deleteProfile: (id: number) =>
+    req<{ deleted: number }>(`/auth/profiles/${id}`, { method: "DELETE" }),
   authLogin: (body: Record<string, unknown>) =>
     req<{ id: number; name: string }>("/auth/login", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),

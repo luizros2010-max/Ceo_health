@@ -48,10 +48,23 @@ cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000
 - Each additional family member taps **"Create a new profile"** → their data is separate.
 - Everyone signs in with their own username/password.
 
-## 5. Keep it running
-- **macOS/Linux:** run under `tmux`/`screen`, or make a `systemd` service / `launchd` agent.
-- **Raspberry Pi:** a `systemd` unit that runs the uvicorn command on boot is ideal.
-- Updates: `git pull` then restart.
+## 5. Keep it running (auto-start on boot)
+A ready-made **systemd** service is included:
+```bash
+sudo cp deploy/ceo-health.service /etc/systemd/system/
+# edit User= and WorkingDirectory= in the file to match your machine
+sudo systemctl daemon-reload && sudo systemctl enable --now ceo-health
+journalctl -u ceo-health -f          # logs
+```
+It runs `deploy/serve.sh` (builds the frontend if needed, then serves on `0.0.0.0:8000`).
+Updates: `git pull` then `sudo systemctl restart ceo-health`.
+- **macOS:** run `HOST=0.0.0.0 deploy/serve.sh` under a `launchd` agent (or `tmux`).
+
+## Managing family members (admin)
+The **first** profile created is the **family admin**. Signed in as admin, a
+**"Family Profiles"** page appears where you can **add members, reset passwords, and
+remove profiles** (deleting a profile removes that person's data). Members only ever
+see their own data.
 
 ## 6. Back up your data
 Everything lives in `data/` (the SQLite DB + uploaded files). Back it up regularly:

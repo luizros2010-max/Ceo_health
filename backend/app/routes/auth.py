@@ -8,9 +8,16 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
-from ..auth import COOKIE_NAME, current_patient, hash_password, make_token, verify_password
+from ..auth import (
+    COOKIE_NAME,
+    current_admin,
+    current_patient,
+    hash_password,
+    make_token,
+    verify_password,
+)
 from ..db import get_session
-from ..models import Patient
+from ..models import NarrativeReport, Observation, Patient, SourceDocument
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -39,6 +46,7 @@ def me(session: Session = Depends(get_session)):
 @router.get("/session")
 def whoami(patient: Patient = Depends(current_patient)):
     return {"id": patient.id, "name": patient.name, "username": patient.username,
+            "is_admin": patient.is_admin,
             "date_of_birth": patient.date_of_birth, "sex": patient.sex}
 
 
@@ -50,8 +58,9 @@ def register(body: Credentials, response: Response, session: Session = Depends(g
     # First registrant claims the pre-existing credential-less default profile so the
     # owner's existing data stays with their account; later registrants get new profiles.
     profiles = session.exec(select(Patient).where(Patient.username.is_not(None))).all()
+    is_first = not profiles
     target = None
-    if not profiles:
+    if is_first:
         target = session.exec(select(Patient).where(Patient.username.is_(None))).first()
     if target is None:
         target = Patient(name=body.name or body.username)
@@ -59,6 +68,7 @@ def register(body: Credentials, response: Response, session: Session = Depends(g
 
     target.username = body.username
     target.password_hash = hash_password(body.password)
+    target.is_admin = is_first  # first profile is the family admin
     if body.name:
         target.name = body.name
     if body.date_of_birth:
@@ -85,3 +95,68 @@ def login(body: Credentials, response: Response, session: Session = Depends(get_
 def logout(response: Response):
     response.delete_cookie(COOKIE_NAME)
     return {"ok": True}
+
+
+# ---- admin: manage family profiles ----
+class ResetPassword(BaseModel):
+    password: str
+
+
+@router.get("/profiles")
+def list_profiles(admin: Patient = Depends(current_admin), session: Session = Depends(get_session)):
+    profiles = session.exec(select(Patient).where(Patient.username.is_not(None))).all()
+    out = []
+    for p in profiles:
+        n_obs = len(session.exec(
+            select(Observation).where(Observation.patient_id == p.id, Observation.status == "confirmed")
+        ).all())
+        out.append({"id": p.id, "name": p.name, "username": p.username, "is_admin": p.is_admin,
+                    "is_you": p.id == admin.id, "observations": n_obs})
+    return out
+
+
+@router.post("/profiles")
+def create_profile(body: Credentials, admin: Patient = Depends(current_admin),
+                   session: Session = Depends(get_session)):
+    if session.exec(select(Patient).where(Patient.username == body.username)).first():
+        raise HTTPException(status_code=400, detail="Username already taken")
+    p = Patient(
+        name=body.name or body.username, username=body.username,
+        password_hash=hash_password(body.password),
+        date_of_birth=body.date_of_birth, sex=body.sex,
+    )
+    session.add(p)
+    session.commit()
+    session.refresh(p)
+    return {"id": p.id, "name": p.name, "username": p.username}
+
+
+@router.post("/profiles/{pid}/reset-password")
+def reset_password(pid: int, body: ResetPassword, admin: Patient = Depends(current_admin),
+                   session: Session = Depends(get_session)):
+    p = session.get(Patient, pid)
+    if not p or p.username is None:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    p.password_hash = hash_password(body.password)
+    session.add(p)
+    session.commit()
+    return {"ok": True}
+
+
+@router.delete("/profiles/{pid}")
+def delete_profile(pid: int, admin: Patient = Depends(current_admin),
+                   session: Session = Depends(get_session)):
+    if pid == admin.id:
+        raise HTTPException(status_code=400, detail="You can't delete your own admin profile")
+    p = session.get(Patient, pid)
+    if not p:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    for o in session.exec(select(Observation).where(Observation.patient_id == pid)).all():
+        session.delete(o)
+    for r in session.exec(select(NarrativeReport).where(NarrativeReport.patient_id == pid)).all():
+        session.delete(r)
+    for d in session.exec(select(SourceDocument).where(SourceDocument.patient_id == pid)).all():
+        session.delete(d)
+    session.delete(p)
+    session.commit()
+    return {"deleted": pid}

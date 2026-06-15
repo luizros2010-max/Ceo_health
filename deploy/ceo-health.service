@@ -1,0 +1,29 @@
+# systemd service for self-hosting CEO of Your Own Health (Linux / Raspberry Pi).
+#
+# Install:
+#   sudo cp deploy/ceo-health.service /etc/systemd/system/
+#   # edit User= and WorkingDirectory= below to match your setup
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now ceo-health
+#   systemctl status ceo-health        # check it's running
+#   journalctl -u ceo-health -f        # follow logs
+#
+# Reach it from family devices over Tailscale at http://<host-tailscale-ip>:8000
+
+[Unit]
+Description=CEO of Your Own Health
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/Ceo_health
+Environment=HOST=0.0.0.0
+Environment=PORT=8000
+ExecStart=/home/pi/Ceo_health/deploy/serve.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

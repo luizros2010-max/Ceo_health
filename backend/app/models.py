@@ -23,6 +23,7 @@ class Patient(SQLModel, table=True):
     name: str
     username: Optional[str] = Field(default=None, unique=True, index=True)
     password_hash: Optional[str] = None
+    is_admin: bool = False
     date_of_birth: Optional[date] = None
     sex: Optional[str] = None  # 'male' | 'female' | other — feeds sex-specific ranges
     created_at: datetime = Field(default_factory=_now)

@@ -30,7 +30,7 @@ def _migrate_sqlite() -> None:
     from sqlalchemy import text
 
     wanted = {
-        "patient": {"username": "VARCHAR", "password_hash": "VARCHAR"},
+        "patient": {"username": "VARCHAR", "password_hash": "VARCHAR", "is_admin": "INTEGER DEFAULT 0"},
     }
     with engine.begin() as conn:
         for table, cols in wanted.items():

@@ -85,3 +85,9 @@ def current_patient(
     if not p:
         raise HTTPException(status_code=401, detail="Unknown patient")
     return p
+
+
+def current_admin(patient: Patient = Depends(current_patient)) -> Patient:
+    if not patient.is_admin:
+        raise HTTPException(status_code=403, detail="Admin only")
+    return patient

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
 import { api } from "./api/client";
 import Login from "./pages/Login";
+import Admin from "./pages/Admin";
 import Overview from "./pages/Overview";
 import Upload from "./pages/Upload";
 import Documents from "./pages/Documents";
@@ -16,7 +17,7 @@ import Report from "./pages/Report";
 import Review from "./pages/Review";
 
 export default function App() {
-  const [profile, setProfile] = useState<{ name: string } | null | undefined>(undefined);
+  const [profile, setProfile] = useState<{ name: string; is_admin: boolean } | null | undefined>(undefined);
 
   function refresh() {
     api.authWhoami().then((p) => setProfile(p)).catch(() => setProfile(null));
@@ -52,6 +53,7 @@ export default function App() {
           <NavLink to="/insights">AI Insights</NavLink>
           <NavLink to="/report">Doctor Report</NavLink>
           <NavLink to="/review">Review</NavLink>
+          {profile.is_admin && <NavLink to="/admin">Family Profiles</NavLink>}
         </nav>
         <button className="ghost" onClick={logout} style={{ marginTop: 18, width: "100%" }}>
           Sign out
@@ -72,6 +74,7 @@ export default function App() {
           <Route path="/insights" element={<Insights />} />
           <Route path="/report" element={<Report />} />
           <Route path="/review" element={<Review />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>
     </div>
