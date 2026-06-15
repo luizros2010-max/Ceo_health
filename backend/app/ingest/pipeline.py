@@ -12,8 +12,9 @@ from typing import Optional
 
 from sqlmodel import Session, select
 
+from ..config import settings
 from ..models import ExtractionRun, Observation, Patient, SourceDocument
-from . import extract_llm, normalize, validate
+from . import extract_llm, extract_rules, normalize, validate
 from .extract_pdf import extract_pdf
 from .intake import PDF_MIME, source_type_for, store_document
 
@@ -110,43 +111,49 @@ def ingest_document(
             message="No extractable text — looks like a scanned PDF (Phase 3 / OCR).",
         )
 
-    result = extract_llm.extract_from_text(pdf.full_text)
+    # Choose extraction engine: Claude when a key is set, else the built-in
+    # key-free text parser. Fall back to the parser if the LLM call fails.
+    rows = []
+    method = "text_rules"
+    if settings.has_api_key:
+        result = extract_llm.extract_from_text(pdf.full_text)
+        session.add(ExtractionRun(
+            source_document_id=doc.id, model_id=result.model_id or "n/a", prompt_version="v1",
+            tokens_in=result.tokens_in, tokens_out=result.tokens_out, ms=result.ms,
+            ok=result.ok, error=result.error,
+        ))
+        if result.ok:
+            rows = result.rows
+            method = "text_pdf"
+            doc.lab_name = result.lab_name
+            doc.collection_date = _parse_iso_date(result.collection_date)
+            doc.report_date = _parse_iso_date(result.report_date)
 
-    run = ExtractionRun(
-        source_document_id=doc.id,
-        model_id=result.model_id or "n/a",
-        prompt_version="v1",
-        tokens_in=result.tokens_in,
-        tokens_out=result.tokens_out,
-        ms=result.ms,
-        ok=result.ok,
-        error=result.error,
-    )
-    session.add(run)
+    if not rows:  # no key, or LLM failed/empty -> deterministic parser
+        rr = extract_rules.extract_from_text(session, pdf.full_text)
+        session.add(ExtractionRun(
+            source_document_id=doc.id, model_id="rules", prompt_version="v1", ok=True,
+        ))
+        rows = rr.rows
+        method = "text_rules"
+        if doc.collection_date is None:
+            doc.collection_date = rr.collection_date
 
-    if not result.ok:
+    if not rows:
         doc.ingest_status = "failed"
-        msg = {
-            "no_api_key": "ANTHROPIC_API_KEY not set — text stored, extraction skipped. "
-                          "Add a key (or use manual entry) to extract observations.",
-            "anthropic_sdk_missing": "anthropic SDK not installed.",
-        }.get(result.error or "", f"Extraction failed: {result.error}")
-        doc.notes = msg
+        doc.notes = ("Couldn't recognize biomarker values in this PDF's text. "
+                     "You can add values via manual entry, or set an ANTHROPIC_API_KEY "
+                     "for AI extraction of unusual formats.")
         session.add(doc)
         return IngestSummary(
             document_id=doc.id, is_duplicate=False, status=doc.ingest_status,
-            extraction_error=result.error, message=msg,
+            message=doc.notes,
         )
-
-    # Document-level metadata from extraction.
-    doc.lab_name = result.lab_name
-    doc.collection_date = _parse_iso_date(result.collection_date)
-    doc.report_date = _parse_iso_date(result.report_date)
 
     birth = patient.date_of_birth if patient else None
     confirmed = needs_review = 0
 
-    for r in result.rows:
+    for r in rows:
         match = normalize.match_biomarker(session, r.raw_analyte_name)
         conv = (
             normalize.convert_value(session, match.biomarker, r.value_numeric, r.unit_raw)
@@ -203,7 +210,7 @@ def ingest_document(
             page_index=r.page_index,
             source_text_snippet=(", ".join(notes_bits) + " | " if notes_bits else "")
             + (r.source_text_snippet or ""),
-            extraction_method="text_pdf",
+            extraction_method=method,
             mapping_confidence=confidence,
             status=status,
         )

@@ -31,9 +31,9 @@ export default function Upload() {
     <div>
       <h2>Upload</h2>
       {keyConfigured === false && (
-        <p className="pill warn">
-          No Claude API key configured — PDFs will be stored but not auto-extracted. Use manual entry
-          below, or set ANTHROPIC_API_KEY in .env.
+        <p className="pill neutral">
+          Built-in reader: lab PDFs are parsed for biomarker values automatically (no API key needed).
+          Set ANTHROPIC_API_KEY for AI extraction of unusual/messy formats.
         </p>
       )}
 
