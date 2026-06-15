@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, type Biomarker, type Timeline } from "../api/client";
 import TrendChart from "../components/TrendChart";
+import MultiSourceTrendChart from "../components/MultiSourceTrendChart";
 
 export default function BiomarkerTimeline() {
   const { slug } = useParams();
@@ -9,6 +10,7 @@ export default function BiomarkerTimeline() {
   const [biomarkers, setBiomarkers] = useState<Biomarker[]>([]);
   const [timeline, setTimeline] = useState<Timeline | null>(null);
   const [source, setSource] = useState<string>("all");
+  const [overlay, setOverlay] = useState(false);
 
   useEffect(() => {
     api.biomarkers().then((b) => {
@@ -42,10 +44,18 @@ export default function BiomarkerTimeline() {
           ))}
         </select>
         {sources.length > 1 && (
-          <select value={source} onChange={(e) => setSource(e.target.value)}>
-            <option value="all">All sources ({sources.length})</option>
-            {sources.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          <>
+            <label className="muted" style={{ fontSize: 13 }}>
+              <input type="checkbox" checked={overlay} onChange={(e) => setOverlay(e.target.checked)} />{" "}
+              overlay sources
+            </label>
+            {!overlay && (
+              <select value={source} onChange={(e) => setSource(e.target.value)}>
+                <option value="all">All sources ({sources.length})</option>
+                {sources.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            )}
+          </>
         )}
         {filtered && (
           <span className="muted">
@@ -56,7 +66,13 @@ export default function BiomarkerTimeline() {
       </div>
 
       <div className="panel">
-        {filtered ? <TrendChart timeline={filtered} /> : <p className="muted">Loading…</p>}
+        {!timeline ? (
+          <p className="muted">Loading…</p>
+        ) : overlay && sources.length > 1 ? (
+          <MultiSourceTrendChart timeline={timeline} />
+        ) : (
+          filtered && <TrendChart timeline={filtered} />
+        )}
       </div>
     </div>
   );

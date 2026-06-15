@@ -172,26 +172,42 @@ alias matching (EN + PT + fuzzy), and sha256 dedup.
 | GET | `/biomarkers` | catalog (+ whether you have data) |
 | GET | `/biomarkers/:slug/timeline` | points in canonical unit + reference band |
 | GET | `/overview` | latest value per biomarker, in/out-of-range, stats |
+| GET | `/patient`, PATCH `/patient` | profile (age/sex) for analysis context |
 | GET | `/analysis/status` | whether a key is configured (never returns the key) |
+| GET | `/analysis/score` | health score vs age-peers (transparent, deterministic) |
+| GET | `/analysis/plan` | action-plan targets + workout/nutrition levers |
+| POST | `/analysis/preview` | exact minimal slice + trend flags that would be shared |
+| POST | `/analysis/run`, `/analysis/stream` | AI summary on the slice (key required) |
+| POST | `/analysis/plan/stream` | AI-drafted plan (key required) |
+| GET | `/connectors/status` | wearable connector availability |
+| POST | `/connectors/oura/sync` | pull Oura daily data (token) |
+| POST | `/connectors/apple-health` | import an Apple Health export (zip/xml) |
+| GET | `/reports`, POST/DELETE | imaging / narrative reports |
 
 ---
 
 ## Dashboard pages
 
-- **Overview** — biomarker cards (latest value, in/out-of-range pill, sparkline) + header stats.
+- **Overview** — biomarker cards + a vitals quick-entry (BP / BMI auto-calc / waist / weight).
 - **Upload** — drag-drop PDFs/scans + manual-entry form.
-- **Documents** — every source document; detail view shows the **original file side-by-side with parsed observations**.
-- **Biomarker Timeline** — line chart over decades with the reference-range band shaded and out-of-range points highlighted.
+- **Documents** — every source document; detail shows the **original file side-by-side with parsed observations**.
+- **Connectors** — Oura Ring (API token sync) and Apple Health (export import).
+- **Biomarker Timeline** — reference-band line chart with a **source filter** and **per-source overlay**.
+- **Health Score** — overall gauge + domain breakdown vs age-peers, with explicit scoring anchors.
+- **Action Plan** — score-gap targets + workout/nutrition/lifestyle levers + optional AI draft.
+- **AI Insights** — deterministic trend flags + streaming, minimal-slice AI summary.
+- **Imaging & Reports** — narrative reports (MRI, echo, endoscopy…) beside the timelines.
+- **Doctor Report** — printable / Save-as-PDF: score, plan targets, flags, all biomarkers, imaging.
 - **Review** — low-confidence / unmapped rows; confirm, re-map (teaches the catalog), or reject.
 
 ---
 
 ## Roadmap
 
-- **Phase 1 (this):** foundation — schema, seed catalog, text-PDF extraction → review/commit, timelines.
-- **Phase 2:** richer matching, 100–150 analytes, multi-biomarker overlays, robustness at scale.
-- **Phase 3:** scans & photos (macOS Vision OCR + Claude vision), HEIC, bbox overlays.
-- **Phase 4:** AI longevity layer — explicit, minimal-slice analysis with a "what will be shared" preview.
+- **Phase 1 — done:** foundation — schema, seed catalog, text-PDF extraction → review/commit, timelines.
+- **Phase 2 — done:** richer catalog (EN/PT/ES aliases), unit conversions, multi-source robustness.
+- **Phase 3 — partial:** structured CSV import + wearables (Oura API, Apple Health export). Scanned-PDF OCR still pending.
+- **Phase 4 — done:** AI insights (minimal-slice, streaming), Health Score, Action Plan, Doctor Report.
 
 ---
 
