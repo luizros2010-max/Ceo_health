@@ -54,6 +54,37 @@ def init_db() -> None:
         seed_default_patient(session)
         seed_biomarkers(session)
         session.commit()
+        _refresh_catalog_ranges(session)
+
+
+def _refresh_catalog_ranges(session: Session) -> None:
+    """Re-apply current catalog default ranges to observations that use them.
+
+    Keeps in/out-of-range correct after catalog tweaks (e.g. eGFR >=60), without
+    touching ranges that came from a lab report (ref_source='report').
+    """
+    from sqlmodel import select
+
+    from .models import Biomarker, Observation
+
+    bms = {b.id: b for b in session.exec(select(Biomarker)).all()}
+    changed = 0
+    rows = session.exec(
+        select(Observation).where(Observation.biomarker_id.is_not(None))
+    ).all()
+    for o in rows:
+        if o.ref_source not in (None, "catalog_default"):
+            continue
+        b = bms.get(o.biomarker_id)
+        if not b:
+            continue
+        if o.ref_low != b.default_ref_low or o.ref_high != b.default_ref_high:
+            o.ref_low, o.ref_high = b.default_ref_low, b.default_ref_high
+            o.ref_source = "catalog_default"
+            session.add(o)
+            changed += 1
+    if changed:
+        session.commit()
 
 
 def get_session() -> Iterator[Session]:

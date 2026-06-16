@@ -17,7 +17,7 @@ from ..textnorm import normalize_alias
 CATALOG: list[dict] = [
     {
         "slug": "glucose_fasting", "display_name": "Glucose (Fasting)", "category": "Metabolic",
-        "canonical_unit": "mg/dL", "ref_low": 70, "ref_high": 99, "higher_is_better": None,
+        "canonical_unit": "mg/dL", "ref_low": 70, "ref_high": 100, "higher_is_better": None,
         "aliases": ["glucose", "fasting glucose", "glucose fasting", "blood glucose",
                      "glicose", "glicemia", "glicemia de jejum", "glicose em jejum", "gli",
                      "glicemia basal", "glucosa", "glucemia"],
@@ -87,7 +87,7 @@ CATALOG: list[dict] = [
     },
     {
         "slug": "egfr", "display_name": "eGFR", "category": "Renal",
-        "canonical_unit": "mL/min/1.73m2", "ref_low": 90, "ref_high": None, "higher_is_better": True,
+        "canonical_unit": "mL/min/1.73m2", "ref_low": 60, "ref_high": None, "higher_is_better": True,
         "aliases": ["egfr", "gfr", "estimated gfr", "taxa de filtracao glomerular", "tfg",
                      "filtrado glomerular", "filtrado glomerular calculado"],
         "conversions": [],
@@ -359,6 +359,14 @@ def seed_biomarkers(session: Session) -> None:
             )
             session.add(biomarker)
             session.flush()
+        else:
+            # Keep catalog metadata current (e.g. corrected reference ranges).
+            biomarker.default_ref_low = entry["ref_low"]
+            biomarker.default_ref_high = entry["ref_high"]
+            biomarker.higher_is_better = entry["higher_is_better"]
+            biomarker.category = entry["category"]
+            biomarker.canonical_unit = entry["canonical_unit"]
+            session.add(biomarker)
 
         # Aliases (normalized + accent-folded). Always include the display name.
         alias_sources = list(entry["aliases"]) + [entry["display_name"], entry["slug"].replace("_", " ")]
