@@ -10,7 +10,7 @@ from sqlmodel import Session, select
 from ..auth import current_patient_id
 from ..db import get_session
 from ..ingest.pipeline import ingest_document
-from ..models import Observation, SourceDocument
+from ..models import ExtractionRun, NarrativeReport, Observation, SourceDocument
 from ..schemas import DocumentPatch
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
@@ -117,10 +117,12 @@ def delete_document(doc_id: int, session: Session = Depends(get_session), pid: i
     doc = session.get(SourceDocument, doc_id)
     if not doc or doc.patient_id != pid:
         raise HTTPException(status_code=404, detail="Document not found")
-    for o in session.exec(
-        select(Observation).where(Observation.source_document_id == doc_id)
-    ).all():
-        session.delete(o)
+    # Remove everything that references this document, or the FK constraint blocks the delete.
+    for model in (Observation, ExtractionRun, NarrativeReport):
+        for row in session.exec(
+            select(model).where(model.source_document_id == doc_id)
+        ).all():
+            session.delete(row)
     session.delete(doc)
     session.commit()
     return {"deleted": doc_id}
