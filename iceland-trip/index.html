@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Iceland Trip</title>
+<style>
+  :root {
+    --bg: #070d16;
+    --bg2: #0e1a2b;
+    --panel: #101d30;
+    --border: #1f3350;
+    --text: #eaf2fb;
+    --muted: #8fa5c0;
+    --aurora1: #38f2b0;
+    --aurora2: #7c6cf0;
+    --aurora3: #3aa0ff;
+    --danger: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: radial-gradient(ellipse at top, var(--bg2), var(--bg) 60%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  }
+
+  /* ---------- Lock screen ---------- */
+  #lock {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 18px;
+    background:
+      radial-gradient(ellipse at 30% 10%, rgba(56,242,176,0.12), transparent 45%),
+      radial-gradient(ellipse at 70% 0%, rgba(124,108,240,0.15), transparent 50%),
+      var(--bg);
+    z-index: 50;
+  }
+  #lock h1 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    background: linear-gradient(90deg, var(--aurora1), var(--aurora2), var(--aurora3));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin: 0;
+  }
+  #lock p { color: var(--muted); margin: 0; font-size: 0.9rem; }
+  #lock form { display: flex; gap: 10px; }
+  #lock input[type="password"] {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    min-width: 220px;
+  }
+  #lock input[type="password"]:focus { border-color: var(--aurora3); }
+  #lock button {
+    background: linear-gradient(90deg, var(--aurora3), var(--aurora2));
+    border: none;
+    color: #04101c;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  #lock #lockError { color: var(--danger); font-size: 0.85rem; min-height: 1.2em; }
+
+  /* ---------- App ---------- */
+  #app { display: none; min-height: 100%; }
+  header {
+    padding: 28px 24px 18px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(56,242,176,0.06), transparent);
+  }
+  header h1 {
+    margin: 0 0 4px;
+    font-size: 1.9rem;
+    letter-spacing: 0.03em;
+    background: linear-gradient(90deg, var(--aurora1), var(--aurora3), var(--aurora2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  header p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+  #dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    padding: 36px 20px;
+    text-align: center;
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    background: rgba(255,255,255,0.01);
+  }
+  #dropzone.drag {
+    border-color: var(--aurora1);
+    background: rgba(56,242,176,0.06);
+    color: var(--text);
+  }
+  #dropzone strong { color: var(--text); }
+  #fileInput { display: none; }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 22px 0 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .toolbar h2 { margin: 0; font-size: 1.05rem; color: var(--muted); font-weight: 500; }
+  .btns { display: flex; gap: 10px; }
+  .btn {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .btn:hover { border-color: var(--aurora3); }
+  .btn.primary {
+    background: linear-gradient(90deg, var(--aurora3), var(--aurora2));
+    color: #04101c;
+    font-weight: 600;
+    border: none;
+  }
+  .btn.danger { border-color: rgba(255,107,107,0.4); color: var(--danger); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  #empty { text-align: center; color: var(--muted); padding: 40px 0; display: none; }
+
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+  }
+  .thumb {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb .del {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(7,13,22,0.75);
+    color: var(--text);
+    border: none;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .thumb:hover .del { opacity: 1; }
+  .thumb .cap {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 6px 8px;
+    font-size: 0.7rem;
+    color: #fff;
+    background: linear-gradient(0deg, rgba(0,0,0,0.6), transparent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .thumb:hover .cap { opacity: 1; }
+
+  /* ---------- Slideshow ---------- */
+  #slideshow {
+    position: fixed;
+    inset: 0;
+    background: rgba(2,6,12,0.97);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    flex-direction: column;
+  }
+  #slideshow.open { display: flex; }
+  #slideStage {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 20px;
+    min-height: 0;
+  }
+  #slideStage img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 10px 60px rgba(56,242,176,0.08);
+  }
+  .nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(16,29,48,0.7);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 1.3rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav-btn:hover { border-color: var(--aurora3); }
+  #prevBtn { left: 16px; }
+  #nextBtn { right: 16px; }
+  #slideFooter {
+    padding: 14px 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  #slideCaption { flex: 1; text-align: center; color: var(--text); }
+  #closeSlide {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.6rem;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Lock screen: lightweight gate, not real security (password lives in this file). -->
+  <div id="lock">
+    <h1>🌋 Iceland Trip</h1>
+    <p>Private album — enter the passphrase to continue</p>
+    <form id="lockForm">
+      <input type="password" id="lockInput" placeholder="Passphrase" autocomplete="off" />
+      <button type="submit">Enter</button>
+    </form>
+    <div id="lockError"></div>
+  </div>
+
+  <div id="app">
+    <header>
+      <h1>Iceland Trip</h1>
+      <p>Upload your photos and relive the trip as a slideshow</p>
+    </header>
+
+    <main>
+      <div id="dropzone">
+        <div><strong>Drop photos here</strong> or click to choose files</div>
+        <div style="font-size:0.8rem;margin-top:6px;">JPG, PNG, WEBP, HEIC — stored locally in this browser</div>
+        <input type="file" id="fileInput" accept="image/*" multiple />
+      </div>
+
+      <div class="toolbar">
+        <h2 id="countLabel">0 photos</h2>
+        <div class="btns">
+          <button class="btn primary" id="slideshowBtn" disabled>▶ Start Slideshow</button>
+          <button class="btn danger" id="clearBtn" disabled>Clear all</button>
+        </div>
+      </div>
+
+      <div id="empty">No photos yet — upload some to get started.</div>
+      <div id="grid"></div>
+    </main>
+  </div>
+
+  <div id="slideshow">
+    <button id="closeSlide" title="Close (Esc)">×</button>
+    <div id="slideStage">
+      <button class="nav-btn" id="prevBtn">‹</button>
+      <img id="slideImg" alt="" />
+      <button class="nav-btn" id="nextBtn">›</button>
+    </div>
+    <div id="slideFooter">
+      <button class="btn" id="autoplayBtn">▶ Autoplay</button>
+      <div id="slideCaption"></div>
+      <div id="slideCount"></div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  // Change this to whatever passphrase you'd like. This is a soft gate for
+  // a casual private page, not real security — the value is visible in the
+  // page source to anyone with dev tools.
+  const PASSPHRASE = "vatnajokull";
+  const SESSION_KEY = "iceland-trip-unlocked";
+
+  const DB_NAME = "iceland-trip-db";
+  const STORE = "photos";
+  let db;
+
+  function openDb() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const d = req.result;
+        if (!d.objectStoreNames.contains(STORE)) {
+          const store = d.createObjectStore(STORE, { keyPath: "id", autoIncrement: true });
+          store.createIndex("addedAt", "addedAt");
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function txStore(mode) {
+    return db.transaction(STORE, mode).objectStore(STORE);
+  }
+
+  function getAllPhotos() {
+    return new Promise((resolve, reject) => {
+      const req = txStore("readonly").index("addedAt").getAll();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function addPhoto(blob, name) {
+    return new Promise((resolve, reject) => {
+      const req = txStore("readwrite").add({ blob, name, addedAt: Date.now() });
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function deletePhoto(id) {
+    return new Promise((resolve, reject) => {
+      const req = txStore("readwrite").delete(id);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function clearAllPhotos() {
+    return new Promise((resolve, reject) => {
+      const req = txStore("readwrite").clear();
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  // ---------- Lock screen ----------
+  const lockEl = document.getElementById("lock");
+  const appEl = document.getElementById("app");
+  const lockForm = document.getElementById("lockForm");
+  const lockInput = document.getElementById("lockInput");
+  const lockError = document.getElementById("lockError");
+
+  function unlock() {
+    lockEl.style.display = "none";
+    appEl.style.display = "block";
+    sessionStorage.setItem(SESSION_KEY, "1");
+    init();
+  }
+
+  lockForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (lockInput.value === PASSPHRASE) {
+      unlock();
+    } else {
+      lockError.textContent = "Incorrect passphrase, try again.";
+      lockInput.value = "";
+      lockInput.focus();
+    }
+  });
+
+  if (sessionStorage.getItem(SESSION_KEY) === "1") {
+    unlock();
+  } else {
+    lockInput.focus();
+  }
+
+  // ---------- App ----------
+  let photos = []; // {id, blob, name, addedAt, url}
+  let slideIndex = 0;
+  let autoplayTimer = null;
+
+  const grid = document.getElementById("grid");
+  const emptyEl = document.getElementById("empty");
+  const countLabel = document.getElementById("countLabel");
+  const slideshowBtn = document.getElementById("slideshowBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const dropzone = document.getElementById("dropzone");
+  const fileInput = document.getElementById("fileInput");
+
+  const slideshowEl = document.getElementById("slideshow");
+  const slideImg = document.getElementById("slideImg");
+  const slideCaption = document.getElementById("slideCaption");
+  const slideCount = document.getElementById("slideCount");
+  const autoplayBtn = document.getElementById("autoplayBtn");
+
+  async function init() {
+    db = await openDb();
+    photos = await getAllPhotos();
+    photos.forEach((p) => (p.url = URL.createObjectURL(p.blob)));
+    render();
+  }
+
+  function render() {
+    countLabel.textContent = photos.length + (photos.length === 1 ? " photo" : " photos");
+    slideshowBtn.disabled = photos.length === 0;
+    clearBtn.disabled = photos.length === 0;
+    emptyEl.style.display = photos.length === 0 ? "block" : "none";
+
+    grid.innerHTML = "";
+    photos.forEach((p, idx) => {
+      const div = document.createElement("div");
+      div.className = "thumb";
+      div.innerHTML = `
+        <img src="${p.url}" alt="${escapeHtml(p.name)}" loading="lazy" />
+        <div class="cap">${escapeHtml(p.name)}</div>
+        <button class="del" title="Delete">×</button>
+      `;
+      div.querySelector("img").addEventListener("click", () => openSlideshow(idx));
+      div.querySelector(".del").addEventListener("click", async (e) => {
+        e.stopPropagation();
+        await deletePhoto(p.id);
+        URL.revokeObjectURL(p.url);
+        photos = photos.filter((x) => x.id !== p.id);
+        render();
+      });
+      grid.appendChild(div);
+    });
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  async function handleFiles(fileList) {
+    const files = Array.from(fileList).filter((f) => f.type.startsWith("image/"));
+    for (const f of files) {
+      const id = await addPhoto(f, f.name);
+      photos.push({ id, blob: f, name: f.name, addedAt: Date.now(), url: URL.createObjectURL(f) });
+    }
+    render();
+  }
+
+  dropzone.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", (e) => handleFiles(e.target.files));
+
+  ["dragenter", "dragover"].forEach((evt) =>
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropzone.classList.add("drag");
+    })
+  );
+  ["dragleave", "drop"].forEach((evt) =>
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("drag");
+    })
+  );
+  dropzone.addEventListener("drop", (e) => {
+    if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+  });
+
+  clearBtn.addEventListener("click", async () => {
+    if (!confirm("Delete all photos? This cannot be undone.")) return;
+    await clearAllPhotos();
+    photos.forEach((p) => URL.revokeObjectURL(p.url));
+    photos = [];
+    render();
+  });
+
+  // ---------- Slideshow ----------
+  function openSlideshow(idx) {
+    slideIndex = idx;
+    slideshowEl.classList.add("open");
+    showSlide();
+  }
+
+  function closeSlideshow() {
+    slideshowEl.classList.remove("open");
+    stopAutoplay();
+  }
+
+  function showSlide() {
+    const p = photos[slideIndex];
+    if (!p) return;
+    slideImg.src = p.url;
+    slideImg.alt = p.name;
+    slideCaption.textContent = p.name;
+    slideCount.textContent = `${slideIndex + 1} / ${photos.length}`;
+  }
+
+  function nextSlide() {
+    slideIndex = (slideIndex + 1) % photos.length;
+    showSlide();
+  }
+
+  function prevSlide() {
+    slideIndex = (slideIndex - 1 + photos.length) % photos.length;
+    showSlide();
+  }
+
+  function startAutoplay() {
+    autoplayTimer = setInterval(nextSlide, 4000);
+    autoplayBtn.textContent = "⏸ Pause";
+  }
+
+  function stopAutoplay() {
+    clearInterval(autoplayTimer);
+    autoplayTimer = null;
+    autoplayBtn.textContent = "▶ Autoplay";
+  }
+
+  slideshowBtn.addEventListener("click", () => openSlideshow(0));
+  document.getElementById("closeSlide").addEventListener("click", closeSlideshow);
+  document.getElementById("prevBtn").addEventListener("click", prevSlide);
+  document.getElementById("nextBtn").addEventListener("click", nextSlide);
+  autoplayBtn.addEventListener("click", () => (autoplayTimer ? stopAutoplay() : startAutoplay()));
+
+  document.addEventListener("keydown", (e) => {
+    if (!slideshowEl.classList.contains("open")) return;
+    if (e.key === "Escape") closeSlideshow();
+    if (e.key === "ArrowRight") nextSlide();
+    if (e.key === "ArrowLeft") prevSlide();
+    if (e.key === " ") {
+      e.preventDefault();
+      autoplayTimer ? stopAutoplay() : startAutoplay();
+    }
+  });
+})();
+</script>
+</body>
+</html>
