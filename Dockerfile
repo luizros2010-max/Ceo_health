@@ -13,6 +13,7 @@ COPY . .
 # Data (SQLite + uploads) lives on a mounted volume in production.
 ENV DB_PATH=/data/ceo_health.db \
     DOCUMENTS_DIR=/data/documents \
+    ICELAND_PHOTOS_DIR=/data/iceland_photos \
     REQUIRE_AUTH=true \
     PORT=8000
 

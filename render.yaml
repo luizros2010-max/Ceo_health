@@ -17,6 +17,13 @@ services:
         value: /data/ceo_health.db
       - key: DOCUMENTS_DIR
         value: /data/documents
+      - key: ICELAND_PHOTOS_DIR
+        value: /data/iceland_photos
+      # Set a real passphrase in the Render dashboard before sharing the link —
+      # the "vatnajokull" default is in the public source, so leaving this unset
+      # means anyone with the URL can guess it.
+      - key: ICELAND_TRIP_PASSWORD
+        sync: false
       # Optional: paste your key in the Render dashboard to enable AI features.
       # - key: ANTHROPIC_API_KEY
       #   sync: false
