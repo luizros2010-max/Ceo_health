@@ -18,7 +18,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .config import REPO_ROOT
 from .db import init_db
-from .routes import analysis, auth, biomarkers, connectors, documents, observations, patient, reports
+from .routes import analysis, auth, biomarkers, connectors, documents, iceland, observations, patient, reports
 
 
 log = logging.getLogger("ceo_health")
@@ -84,6 +84,13 @@ app.include_router(reports.router)
 app.include_router(patient.router)
 app.include_router(connectors.router)
 app.include_router(analysis.router)
+app.include_router(iceland.router)
+
+# Iceland trip album (static page, own passphrase) — mounted before the SPA
+# catch-all below so it isn't swallowed by the health app's index.html fallback.
+_iceland_dir = REPO_ROOT / "iceland-trip"
+if _iceland_dir.exists():
+    app.mount("/iceland-trip", StaticFiles(directory=str(_iceland_dir), html=True), name="iceland-trip")
 
 # Local-prod: serve the built frontend (frontend/dist) from the same process.
 _dist = REPO_ROOT / "frontend" / "dist"

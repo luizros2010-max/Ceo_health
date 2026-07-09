@@ -41,6 +41,11 @@ class Settings(BaseSettings):
     db_path: str = "data/ceo_health.db"
     documents_dir: str = "data/documents"
 
+    # Iceland trip album — unrelated to health data, gated by its own passphrase
+    # rather than the patient login system. Set in .env to change the default.
+    iceland_trip_password: str = "vatnajokull"
+    iceland_photos_dir: str = "data/iceland_photos"
+
     @property
     def db_file(self) -> Path:
         p = Path(self.db_path)
@@ -49,6 +54,11 @@ class Settings(BaseSettings):
     @property
     def documents_path(self) -> Path:
         p = Path(self.documents_dir)
+        return p if p.is_absolute() else REPO_ROOT / p
+
+    @property
+    def iceland_photos_path(self) -> Path:
+        p = Path(self.iceland_photos_dir)
         return p if p.is_absolute() else REPO_ROOT / p
 
     @property

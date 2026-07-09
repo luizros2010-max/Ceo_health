@@ -265,7 +265,7 @@
 </head>
 <body>
 
-  <!-- Lock screen: lightweight gate, not real security (password lives in this file). -->
+  <!-- Lock screen: the passphrase is checked server-side (see /api/iceland/login). -->
   <div id="lock">
     <h1>🌋 Iceland Trip</h1>
     <p>Private album — enter the passphrase to continue</p>
@@ -285,7 +285,7 @@
     <main>
       <div id="dropzone">
         <div><strong>Drop photos here</strong> or click to choose files</div>
-        <div style="font-size:0.8rem;margin-top:6px;">JPG, PNG, WEBP, HEIC — stored locally in this browser</div>
+        <div style="font-size:0.8rem;margin-top:6px;">JPG, PNG, WEBP, HEIC — stored on the server</div>
         <input type="file" id="fileInput" accept="image/*" multiple />
       </div>
 
@@ -320,65 +320,23 @@
 (function () {
   "use strict";
 
-  // Change this to whatever passphrase you'd like. This is a soft gate for
-  // a casual private page, not real security — the value is visible in the
-  // page source to anyone with dev tools.
-  const PASSPHRASE = "vatnajokull";
-  const SESSION_KEY = "iceland-trip-unlocked";
+  const API = "/api/iceland";
 
-  const DB_NAME = "iceland-trip-db";
-  const STORE = "photos";
-  let db;
-
-  function openDb() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = () => {
-        const d = req.result;
-        if (!d.objectStoreNames.contains(STORE)) {
-          const store = d.createObjectStore(STORE, { keyPath: "id", autoIncrement: true });
-          store.createIndex("addedAt", "addedAt");
-        }
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
+  function photoUrl(id) {
+    return `${API}/photos/${id}/file`;
   }
 
-  function txStore(mode) {
-    return db.transaction(STORE, mode).objectStore(STORE);
-  }
-
-  function getAllPhotos() {
-    return new Promise((resolve, reject) => {
-      const req = txStore("readonly").index("addedAt").getAll();
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  function addPhoto(blob, name) {
-    return new Promise((resolve, reject) => {
-      const req = txStore("readwrite").add({ blob, name, addedAt: Date.now() });
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  function deletePhoto(id) {
-    return new Promise((resolve, reject) => {
-      const req = txStore("readwrite").delete(id);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  function clearAllPhotos() {
-    return new Promise((resolve, reject) => {
-      const req = txStore("readwrite").clear();
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-    });
+  async function apiFetch(path, options) {
+    const res = await fetch(API + path, { credentials: "include", ...options });
+    if (res.status === 401) {
+      showLock();
+      throw new Error("locked");
+    }
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.detail || `Request failed (${res.status})`);
+    }
+    return res.status === 204 ? null : res.json();
   }
 
   // ---------- Lock screen ----------
@@ -388,32 +346,45 @@
   const lockInput = document.getElementById("lockInput");
   const lockError = document.getElementById("lockError");
 
+  function showLock() {
+    lockEl.style.display = "flex";
+    appEl.style.display = "none";
+    lockInput.focus();
+  }
+
   function unlock() {
     lockEl.style.display = "none";
     appEl.style.display = "block";
-    sessionStorage.setItem(SESSION_KEY, "1");
     init();
   }
 
-  lockForm.addEventListener("submit", (e) => {
+  lockForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (lockInput.value === PASSPHRASE) {
+    lockError.textContent = "";
+    try {
+      await fetch(API + "/login", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: lockInput.value }),
+      }).then((res) => {
+        if (!res.ok) throw new Error("bad password");
+      });
       unlock();
-    } else {
+    } catch {
       lockError.textContent = "Incorrect passphrase, try again.";
       lockInput.value = "";
       lockInput.focus();
     }
   });
 
-  if (sessionStorage.getItem(SESSION_KEY) === "1") {
-    unlock();
-  } else {
-    lockInput.focus();
-  }
+  // Check for an existing session (cookie) before showing the lock screen.
+  fetch(API + "/session", { credentials: "include" })
+    .then((res) => (res.ok ? unlock() : showLock()))
+    .catch(() => showLock());
 
   // ---------- App ----------
-  let photos = []; // {id, blob, name, addedAt, url}
+  let photos = []; // {id, original_name, mime_type, created_at}
   let slideIndex = 0;
   let autoplayTimer = null;
 
@@ -432,9 +403,7 @@
   const autoplayBtn = document.getElementById("autoplayBtn");
 
   async function init() {
-    db = await openDb();
-    photos = await getAllPhotos();
-    photos.forEach((p) => (p.url = URL.createObjectURL(p.blob)));
+    photos = await apiFetch("/photos");
     render();
   }
 
@@ -449,15 +418,14 @@
       const div = document.createElement("div");
       div.className = "thumb";
       div.innerHTML = `
-        <img src="${p.url}" alt="${escapeHtml(p.name)}" loading="lazy" />
-        <div class="cap">${escapeHtml(p.name)}</div>
+        <img src="${photoUrl(p.id)}" alt="${escapeHtml(p.original_name)}" loading="lazy" />
+        <div class="cap">${escapeHtml(p.original_name)}</div>
         <button class="del" title="Delete">×</button>
       `;
       div.querySelector("img").addEventListener("click", () => openSlideshow(idx));
       div.querySelector(".del").addEventListener("click", async (e) => {
         e.stopPropagation();
-        await deletePhoto(p.id);
-        URL.revokeObjectURL(p.url);
+        await apiFetch(`/photos/${p.id}`, { method: "DELETE" });
         photos = photos.filter((x) => x.id !== p.id);
         render();
       });
@@ -473,10 +441,11 @@
 
   async function handleFiles(fileList) {
     const files = Array.from(fileList).filter((f) => f.type.startsWith("image/"));
-    for (const f of files) {
-      const id = await addPhoto(f, f.name);
-      photos.push({ id, blob: f, name: f.name, addedAt: Date.now(), url: URL.createObjectURL(f) });
-    }
+    if (!files.length) return;
+    const fd = new FormData();
+    files.forEach((f) => fd.append("files", f));
+    const uploaded = await apiFetch("/photos", { method: "POST", body: fd });
+    photos.push(...uploaded);
     render();
   }
 
@@ -501,8 +470,7 @@
 
   clearBtn.addEventListener("click", async () => {
     if (!confirm("Delete all photos? This cannot be undone.")) return;
-    await clearAllPhotos();
-    photos.forEach((p) => URL.revokeObjectURL(p.url));
+    await apiFetch("/photos", { method: "DELETE" });
     photos = [];
     render();
   });
@@ -522,9 +490,9 @@
   function showSlide() {
     const p = photos[slideIndex];
     if (!p) return;
-    slideImg.src = p.url;
-    slideImg.alt = p.name;
-    slideCaption.textContent = p.name;
+    slideImg.src = photoUrl(p.id);
+    slideImg.alt = p.original_name;
+    slideCaption.textContent = p.original_name;
     slideCount.textContent = `${slideIndex + 1} / ${photos.length}`;
   }
 

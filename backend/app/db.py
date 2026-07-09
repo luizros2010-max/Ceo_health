@@ -10,6 +10,7 @@ from .config import settings
 
 settings.db_file.parent.mkdir(parents=True, exist_ok=True)
 settings.documents_path.mkdir(parents=True, exist_ok=True)
+settings.iceland_photos_path.mkdir(parents=True, exist_ok=True)
 
 engine = create_engine(
     f"sqlite:///{settings.db_file}",

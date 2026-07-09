@@ -137,6 +137,19 @@ class ExtractionRun(SQLModel, table=True):
     created_at: datetime = Field(default_factory=_now)
 
 
+class TripPhoto(SQLModel, table=True):
+    """Iceland trip album photo. Unrelated to the health data model — its own table
+    so it can be wiped or exported independently without touching patient records."""
+
+    __tablename__ = "trip_photo"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    file_path: str
+    original_name: str
+    mime_type: str
+    created_at: datetime = Field(default_factory=_now)
+
+
 class NarrativeReport(SQLModel, table=True):
     """Imaging / narrative reports (MRI, echocardiogram, endoscopy, specialist notes).
 
